@@ -6,6 +6,7 @@
 	<!--Fiery Squirrel Modules-->
 	<haxelib name="ui" />
 	<haxelib name="screenmanager" />
+	<haxelib name="soundmanager" />
 	<haxelib name="graphicmanager" />
 	<haxelib name="languagemanager" />
 	<haxelib name="textmanager" />

@@ -6,7 +6,7 @@ import fs.helper.MathHelper;
  * ...
  * @author Henry D. Fernández B.
  */
-class DeveloperScreen extends MenuScreen
+class DeveloperScreen extends UIScreen
 {
 	static public var NAME : String = "DEVELOPER_SCREEN";
 	

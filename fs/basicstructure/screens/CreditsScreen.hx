@@ -4,7 +4,7 @@ package fs.basicstructure.screens;
  * ...
  * @author Henry D. Fernández B.
  */
-class CreditsScreen extends MenuScreen
+class CreditsScreen extends UIScreen
 {
 	static public var NAME : String = "CREDITS_SCREEN";
 	

@@ -1,10 +1,8 @@
 package fs.basicstructure.screens;
 
-import aze.display.SparrowTilesheet;
-import aze.display.TileLayer;
+import fs.screenmanager.Layer;
 import aze.display.TileSprite;
 import flash.display.Bitmap;
-import flash.display.BitmapData;
 import flash.display.Sprite;
 import flash.geom.Point;
 import flash.net.SharedObject;
@@ -13,29 +11,21 @@ import fs.graphicmanager.GraphicManager;
 import fs.languagemanager.LanguageManager;
 import fs.screenmanager.GameScreen;
 import fs.textmanager.Text;
-import fs.ui.Button;
-import fs.ui.ImageButton;
-import fs.ui.ImageCheckBox;
-import fs.ui.Option;
-import fs.ui.Slider;
-import fs.ui.SliderPage;
-import fs.ui.SliderPageButton;
-import fs.ui.TextButton;
-import fs.ui.TextCheckBox;
-import fs.ui.TextSelect;
-import fs.ui.UIObject;
-
+import fs.textmanager.TextManager;
+import fs.ui.*;
+import openfl.Assets;
 
 /**
  * ...
  * @author Henry D. Fernández B.
  */
-class MenuScreen extends GameScreen
+class UIScreen extends GameScreen
 {	
 	static public var UI_LAYER : String = "UILayer";
 	
+	private var view : String;
+	
 	private var uiObjects : Array<UIObject>;
-	private var viewPath : String;
 	private var isPressingObj : Bool;
 	private var backgroundLayer : Sprite;
 	private var downUIObj : UIObject;
@@ -44,13 +34,15 @@ class MenuScreen extends GameScreen
 	private var isClosing : Bool;
 	private var closingAlpha : Float;
 	private var isClosed : Bool;
+	private var texts : Map<String,Text>;
 	
 	public function new(name : String,x : Float,y : Float,viewPath : String, isPopup : Bool = false) 
 	{
 		super(name,x,y,isPopup);
 		
-		this.viewPath = viewPath;
+		this.view = viewPath;
 		uiObjects = new Array<UIObject>();
+		texts = new Map<String,Text>();
 		downUIObj = null;
 		downIds = new Array<Int>();
 		isClosing = false;
@@ -67,11 +59,36 @@ class MenuScreen extends GameScreen
 		addChild(backgroundLayer);
 
 		//Parse view
-		ParseView(viewPath);
+		ParseView(view);
+			
 		Render();
 	}
 	
-	override private function ParseViewHeader(xml : Xml) : Void
+	private function ParseView(view : String) :Void
+	{
+		var str : String;
+		var xml : Xml;
+		
+		try
+		{
+			if (view != "")
+			{
+				trace(view);
+				str = Assets.getText(view);
+				xml = Xml.parse(str).firstElement();
+				
+				ParseViewHeader(xml);
+				for (e in xml.elements())
+					ParseViewBody(e);
+			}
+		}
+		catch (e : String)
+		{
+			trace(e);
+		}
+	}
+	
+	private function ParseViewHeader(xml : Xml) : Void
 	{
 		var backText : String;
 		
@@ -84,6 +101,7 @@ class MenuScreen extends GameScreen
 
 				if (backText != "")
 				{
+					//TODO: check this
 					background = GraphicManager.LoadBitmap(backText);
 					background.scaleX = GraphicManager.GetMaxScale();
 					background.scaleY = GraphicManager.GetMaxScale();
@@ -99,7 +117,7 @@ class MenuScreen extends GameScreen
 		}
 	}
 	
-	override private function ParseViewBody(xml : Xml) : Void
+	private function ParseViewBody(xml : Xml) : Void
 	{
 		try
 		{
@@ -122,47 +140,34 @@ class MenuScreen extends GameScreen
 	
 	private function ParseUIObjects(xml : Xml) : Void
 	{
-		var state, text, id, spritesheetText, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image : String;
-		var uiTileLayer, imagesTileLayer, backTileLayer : SparrowTilesheet;
+		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image : String;
 		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep : Float;
-		var uiSpritesheet, backSpriteheet : BitmapData;
-		var textSize, totalFishes, minFishes, world, activeColor, pressedColor : Int;
+		var textSize, totalFishes, minFishes, world, activeColor,pressColor, order : Int;
 		var checked, hasTitle, hasPager, flipX, lockedWorld, isFeedback, unlocking, completedWorld : Bool;
 		var options : Array<Option>;
 		var sliderPages : Array<SliderPage>;
 		var uiObj : UIObject;
-		var sliderEle : SliderPageButton;
 		var page : SliderPage;
-		var localTileLayer, globalTileLayer, tileLayer : TileLayer;
+		var tileLayer : Layer;
 		var worldInfo : SharedObject;
 		var pos : Point;
 		var font : Font;
 		
-		spritesheetText = xml.get("spritesheet") == null ? "" : xml.get("spritesheet");
-		
 		backActiveName = "";
 		backPressName = "";
-		globalTileLayer = null;
-		localTileLayer = null;
-		font = null;
-		activeColor = 0x000000;
-		pressedColor = 0x000000;
 		
-		if (spritesheetText != "")
-		{
-			uiSpritesheet = GraphicManager.LoadSpritesheet(spritesheetText,"png");
-			data = GraphicManager.LoadSpritesheetData(spritesheetText,"xml");
-			uiTileLayer = new SparrowTilesheet(uiSpritesheet, data);
-			globalTileLayer = new TileLayer(uiTileLayer);
-			globalTileLayer.useTint = true;
-			AddLayer(UI_LAYER, globalTileLayer);
-		}
+		spritesheet = xml.get("spritesheet");
+		layer = xml.get("layer");
+		order = Std.parseInt(xml.get("order"));
+				
+		tileLayer = GraphicManager.LoadTileLayer(spritesheet,order);
+		tileLayer.useTint = true;
+		AddLayer(layer,tileLayer);
 		
 		//if (GetLayer(UI_LAYER) != null)
 		//{
 			for (e2 in xml.elements())
 			{
-				spritesheetText = e2.get("spritesheet") == null ? "" : e2.get("spritesheet");
 				uiObj = null;
 				id = e2.get("name");
 				isFeedback = e2.get("isFeedback") == null ? false : e2.get("isFeedback") == "true";
@@ -170,25 +175,6 @@ class MenuScreen extends GameScreen
 				uiObjX = pos.x;
 				uiObjY = pos.y;
 		
-				if (spritesheetText == "")
-					tileLayer = globalTileLayer;
-				else
-				{
-					if (layers.exists(spritesheetText))
-						localTileLayer = GetLayer(spritesheetText);
-					else
-					{
-						uiSpritesheet = GraphicManager.LoadSpritesheet(spritesheetText,"png");
-						data = GraphicManager.LoadSpritesheetData(spritesheetText,"xml");
-						uiTileLayer = new SparrowTilesheet(uiSpritesheet, data);
-						localTileLayer = new TileLayer(uiTileLayer);
-						localTileLayer.useTint = true;
-						AddLayer(spritesheetText, localTileLayer);
-					}
-					
-					tileLayer = localTileLayer;
-				}
-				
 				switch(e2.nodeName.toLowerCase())
 				{
 					case TextButton.XML:
@@ -209,11 +195,15 @@ class MenuScreen extends GameScreen
 								}
 							}
 						}
+						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("textsize")));
+						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
+						font = TextManager.GetFont(e2.get("font"));
+						activeColor = Std.parseInt(e2.get("activeColor"));
+						pressColor = Std.parseInt(e2.get("pressColor"));
 						//Button
-						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,font,textSize,activeColor,pressedColor,backActiveName,backPressName);
+						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,font,textSize,activeColor,pressColor,backActiveName,backPressName);
 					case ImageButton.XML:
 						
 						for (e3 in e2.elements())
@@ -239,8 +229,9 @@ class MenuScreen extends GameScreen
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						
-						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor, pressedColor,backActiveName,backPressName,image,flipX);
+						activeColor = Std.parseInt(e2.get("activeColor"));
+						pressColor = Std.parseInt(e2.get("pressColor"));
+						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX);
 					case TextCheckBox.XML:
 						checkedText = e2.get("checkedText");
 						uncheckedText = e2.get("uncheckedText");
@@ -263,9 +254,12 @@ class MenuScreen extends GameScreen
 						//Add on press handler name
 						onCheckHandlerName = e2.get("onCheck");
 						onUncheckHandlerName = e2.get("onUncheck");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("textsize")));
+						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
+						font = TextManager.GetFont(e2.get("font"));
+						activeColor = Std.parseInt(e2.get("activeColor"));
+						pressColor = Std.parseInt(e2.get("pressColor"));
 						//Button
-						uiObj = new TextCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName,onUncheckHandlerName,checked, checkedText,uncheckedText,font, textSize,activeColor, pressedColor, backActiveName, backPressName);
+						uiObj = new TextCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName,onUncheckHandlerName,checked, checkedText,uncheckedText,font, textSize,activeColor,pressColor, backActiveName, backPressName);
 						
 					case ImageCheckBox.XML:
 						checkedText = e2.get("checkedImage");
@@ -289,14 +283,15 @@ class MenuScreen extends GameScreen
 						//Add on press handler name
 						onCheckHandlerName = e2.get("onCheck");
 						onUncheckHandlerName = e2.get("onUncheck");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("textsize")));
+						activeColor = Std.parseInt(e2.get("activeColor"));
+						pressColor = Std.parseInt(e2.get("pressColor"));
+						
 						//Button
-						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked, activeColor, pressedColor, backActiveName, backPressName, checkedText, uncheckedText);
+						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText);
 					case TextSelect.XML:
 						options = new Array<Option>();
-						//TODO: Translate system
-						checkedText = "";// Helper.Translate(e2.get("checkedText"));
-						uncheckedText = "";// Helper.Translate(e2.get("uncheckedText"));
+						checkedText = LanguageManager.Translate(e2.get("checkedText"));
+						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
 						for (e3 in e2.elements())
 						{
 							switch(e3.nodeName.toLowerCase())
@@ -318,9 +313,12 @@ class MenuScreen extends GameScreen
 						}
 						//Add on press handler name
 						onActionHandlerName = e2.get("onChange");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("textsize")));
+						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
+						font = TextManager.GetFont(e2.get("font"));
+						activeColor = Std.parseInt(e2.get("activeColor"));
+						pressColor = Std.parseInt(e2.get("pressColor"));
 						//Button
-						uiObj = new TextSelect(id, tileLayer, uiObjX, uiObjY, onActionHandlerName, options, 0, font, textSize, activeColor, pressedColor, backActiveName, backPressName);
+						uiObj = new TextSelect(id, tileLayer, uiObjX, uiObjY, onActionHandlerName, options, 0, font, textSize,activeColor,pressColor, backActiveName, backPressName);
 					case Slider.XML:
 						sliderPages = new Array<SliderPage>();
 						
@@ -338,16 +336,12 @@ class MenuScreen extends GameScreen
 						{							
 							if (e3.nodeName.toLowerCase() == SliderPage.XML)
 							{
-								//TODO: Corregir lo de la traduccion
-								page = new SliderPage(Std.parseInt(e3.get("number")), tileLayer, GraphicManager.FixFloat2ScreenX(Std.parseFloat(e3.get("x"))), GraphicManager.FixFloat2ScreenY(Std.parseFloat(e3.get("y"))), ""/*Helper.Translate(e3.get("title")).toUpperCase()*/);
-								for (e4 in e3.elements())
+								page = new SliderPage(Std.parseInt(e3.get("number")), tileLayer, GraphicManager.FixFloat2ScreenX(Std.parseFloat(e3.get("x"))), GraphicManager.FixFloat2ScreenY(Std.parseFloat(e3.get("y"))), LanguageManager.Translate(e3.get("title")).toUpperCase());
+								/*for (e4 in e3.elements())
 								{
-									//TODO: Fix this
-									/*switch(e4.nodeName.toLowerCase())
+									switch(e4.nodeName.toLowerCase())
 									{
-										//case WorldButton.XML:
-										
-										case "type"
+										case WorldButton.XML:
 											world = Std.parseInt(e4.get("number"));
 											worldInfo = Helper.LoadWorldInfo(world);
 											totalFishes += worldInfo.data.fishes;
@@ -364,28 +358,36 @@ class MenuScreen extends GameScreen
 											else
 												completedWorld = worldInfo.data.fishes >= (Globals.NUMBER_OF_FISHES * Globals.NUMBER_OF_LEVELS);
 											
+											trace(totalFishes);
+											trace((Globals.NUMBER_OF_FISHES * Globals.NUMBER_OF_LEVELS));
 											sliderEle = new WorldButton(e4.get("name"), tileLayer, Helper.FixFloat2ScreenX(Std.parseFloat(e4.get("x"))), Helper.FixFloat2ScreenY(Std.parseFloat(e4.get("y"))), world,onActionHandlerName,"",lockedWorld,minFishes,page,unlocking,completedWorld);
 											sliderEle.SetScale(Helper.GetFixScale());
 											page.AddElement(sliderEle);
+										case ComingSoonWorldButton.XML:
+											sliderEle = new ComingSoonWorldButton(e4.get("name"), tileLayer, Helper.FixFloat2ScreenX(Std.parseFloat(e4.get("x"))), Helper.FixFloat2ScreenY(Std.parseFloat(e4.get("y"))), Std.parseInt(e4.get("number")));
+											sliderEle.SetScale(Helper.GetFixScale());
+											page.AddElement(sliderEle);
 										default:
-									}*/
-								}
+									}
+								}*/
 								
 								sliderPages.push(page);
 							}
 						}
 						
 						//Button
-						//TODO: check this
 						//uiObj = new Slider(id, tileLayer, uiObjX, uiObjY, sliderPages,"",0,hasTitle,titleX,titleY,hasPager,pagerX,pagerY,pagerSep);// onActionHandlerName);
 					default:	
 				}
 				
-				uiObj.SetScale(GraphicManager.GetFixScale());
-				if(isFeedback)
-					uiObj.SetEffect(Effect.Zoom);
-				//uiObj.LoadContent();
-				AddUIbject(uiObj);
+				if (uiObj != null)
+				{
+					uiObj.SetScale(GraphicManager.GetFixScale());
+					//if(isFeedback)
+					//	uiObj.SetEffect(Effect.Zoom);
+					//uiObj.LoadContent();
+					AddUIbject(uiObj);
+				}
 			}
 		//}
 	}
@@ -404,36 +406,28 @@ class MenuScreen extends GameScreen
 		{
 			if (e.nodeType == Xml.Element)
 			{
-				translate = e.get("translate") == null ? true : e.get("translate") == "true";
 				name = e.get("name");
 				font = e.get("font");
-				text = translate ? LanguageManager.Translate(e.get("value")) : e.get("value");
+				text = e.get("value");// translate ? LanguageManager.Translate(e.get("value")) : e.get("value");
+				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e.get("x")), Std.parseFloat(e.get("y"))));
+				size =  GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("size")));
+				color = Std.parseInt(e.get("color"));
+				
+				/*translate = e.get("translate") == null ? true : e.get("translate") == "true";
+				
+				
+				
 				xAlign = e.get("x-align") == null ? "center" : e.get("x-align");
 				yAlign = e.get("y-align") == null ? "center" : e.get("y-align");
-				size = Std.parseInt(e.get("size"));
-				color = Std.parseInt(e.get("color"));
-				letterSpacing = Std.parseInt(e.get("letterspacing"));
-				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e.get("x")), Std.parseFloat(e.get("y"))));
 				
-				/*switch(font)
-				{
-					case Globals.HAND_OF_SEAN_FONT_NAME:
-						font = Globals.HAND_OF_SEAN_FONT.fontName;
-					case Globals.LEMIESZ_FONT_NAME:
-						font = Globals.LEMIESZ_FONT.fontName;
-					case Globals.FIRA_SANS_FONT_NAME:
-						font = Globals.FIRA_SANS_FONT.fontName;
-					default:
-				}*/
-				
-				
+				letterSpacing = GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("letterspacing")));*/
 				
 					
-				/*textField = Helper.CreateText(font, text, Helper.FixIntScale2Screen(size), color, Helper.FixIntScale2Screen(letterSpacing), pos, xAlign, yAlign);
-				
+				textField = TextManager.CreateText(font, text, pos, size, color);// , letterSpacing, pos, xAlign, yAlign);
+				trace(textField);
 				texts.set(name, textField);
 				
-				AddText(name, textField);*/
+				AddText(name, textField);
 			}
 		}
 		
@@ -442,27 +436,20 @@ class MenuScreen extends GameScreen
 	
 	private function ParseSprites(xml : Xml) : Map<String,TileSprite>
 	{
-		var spritesheetText, spriteName, layer, data, id : String;
-		var imagesSpriteheet : BitmapData;
-		var imagesTileLayer : SparrowTilesheet;
-		var uiObjWidth, uiObjHeight, layerIndex, size, color, letterSpacing, recW, recH, textSize : Int;
+		var spritesheet, spriteName, layer, data, id : String;
 		var spriteX, spriteY : Float;
 		var sprite : TileSprite;
+		var tilelayer : Layer;
 		var elements : Map<String,TileSprite>;
-		var tilelayer : TileLayer;
+		var order : Int;
 		
-		spritesheetText = xml.get("spritesheet");
+		spritesheet = xml.get("spritesheet");
 		layer = xml.get("layer");
+		order = Std.parseInt(xml.get("order"));
 				
-		if (spritesheetText != "")
-		{
-			imagesSpriteheet = GraphicManager.LoadSpritesheet(spritesheetText,"png");
-			data = GraphicManager.LoadSpritesheetData(spritesheetText, "xml");
-			imagesTileLayer = new SparrowTilesheet(imagesSpriteheet, data);
-			tilelayer = new TileLayer(imagesTileLayer);
-			tilelayer.useTint = true;
-			AddLayer(layer,tilelayer);
-		}
+		tilelayer = GraphicManager.LoadTileLayer(spritesheet,order);
+		tilelayer.useTint = true;
+		AddLayer(layer,tilelayer);
 		
 		elements = new Map<String,TileSprite>();
 		
@@ -505,6 +492,15 @@ class MenuScreen extends GameScreen
 			uiObjects.push(uiObj);
 			uiObj.layer.addChild(uiObj);	
 			//AddToLayer(UI_LAYER,uiObj);
+		}
+	}
+	
+	public function AddText(key : String,text : Text) : Void
+	{
+		if (!texts.exists(key))
+		{
+			texts.set(key, text);
+			//addChild(text);
 		}
 	}
 	
@@ -631,8 +627,7 @@ class MenuScreen extends GameScreen
 				{
 					if (popupVeil != null)
 					{
-						//TODO: generalize this to an effect
-						//popupVeil.alpha = closingAlpha * Globals.VEIL_ALPHA;
+						popupVeil.alpha = closingAlpha;// * Globals.VEIL_ALPHA;
 					}
 				}
 				
@@ -654,7 +649,7 @@ class MenuScreen extends GameScreen
 						s.alpha = closingAlpha;
 				}
 				
-				for (t in textFields)
+				for (t in texts)
 				{
 					if(t != null)
 						t.alpha = closingAlpha;
@@ -681,5 +676,12 @@ class MenuScreen extends GameScreen
 	
 	public function Close() : Void
 	{
+	}
+	
+	override public function AddElementsToRender() : Void
+	{
+		super.AddElementsToRender();
+		for (t in texts)
+			addChild(t);
 	}
 }

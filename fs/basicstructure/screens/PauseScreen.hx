@@ -15,7 +15,7 @@ import flash.net.URLRequest;
  * ...
  * @author Henry D. Fernández B.
  */
-class PauseScreen extends MenuScreen
+class PauseScreen extends UIScreen
 {
 	static public var NAME : String = "PAUSE_SCREEN";
 	

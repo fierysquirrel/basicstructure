@@ -11,7 +11,7 @@ import aze.display.TileSprite;
  * ...
  * @author Henry D. Fernández B.
  */
-class ModalScreen extends MenuScreen
+class ModalScreen extends UIScreen
 {
 	private var line1Message : String;
 	private var line2Message : String;

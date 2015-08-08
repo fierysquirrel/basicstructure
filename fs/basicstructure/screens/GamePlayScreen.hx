@@ -19,7 +19,7 @@ enum State
  * ...
  * @author Henry D. Fernández B.
  */
-class GamePlayScreen extends GameScreen
+class GamePlayScreen extends UIScreen
 {
 	static public var NAME : String = "GAMEPLAY_SCREEN";
 	
