@@ -1,19 +1,14 @@
-package fs.basicstructure.screens;
+package;
 
-import fs.screenmanager.Layer;
+import aze.display.TileLayer;
 import aze.display.TileSprite;
 import flash.display.Bitmap;
 import flash.display.Sprite;
 import flash.geom.Point;
 import flash.net.SharedObject;
 import flash.text.Font;
-import fs.graphicmanager.GraphicManager;
-import fs.languagemanager.LanguageManager;
-import fs.screenmanager.GameScreen;
-import fs.textmanager.Text;
-import fs.textmanager.TextManager;
-import fs.ui.*;
 import openfl.Assets;
+
 
 /**
  * ...
@@ -25,7 +20,7 @@ class UIScreen extends GameScreen
 	
 	private var view : String;
 	
-	private var uiObjects : Array<UIObject>;
+	private var uiObjects : Map<String,UIObject>;
 	private var isPressingObj : Bool;
 	private var backgroundLayer : Sprite;
 	private var downUIObj : UIObject;
@@ -35,19 +30,21 @@ class UIScreen extends GameScreen
 	private var closingAlpha : Float;
 	private var isClosed : Bool;
 	private var texts : Map<String,Text>;
+	private var timerManager : TimerManager;
 	
 	public function new(name : String,x : Float,y : Float,viewPath : String, isPopup : Bool = false) 
 	{
 		super(name,x,y,isPopup);
 		
 		this.view = viewPath;
-		uiObjects = new Array<UIObject>();
+		uiObjects = new Map<String,UIObject>();
 		texts = new Map<String,Text>();
 		downUIObj = null;
 		downIds = new Array<Int>();
 		isClosing = false;
 		closingAlpha = 1;
 		isClosed = false;
+		timerManager = new TimerManager();
 	}
 	
 	override public function LoadContent():Void 
@@ -73,7 +70,6 @@ class UIScreen extends GameScreen
 		{
 			if (view != "")
 			{
-				trace(view);
 				str = Assets.getText(view);
 				xml = Xml.parse(str).firstElement();
 				
@@ -102,7 +98,7 @@ class UIScreen extends GameScreen
 				if (backText != "")
 				{
 					//TODO: check this
-					background = GraphicManager.LoadBitmap(backText);
+					background = GraphicManager.LoadBitmap(GraphicManager.GetBackgroundsPath() + backText);
 					background.scaleX = GraphicManager.GetMaxScale();
 					background.scaleY = GraphicManager.GetMaxScale();
 					background.x = (GraphicManager.GetWidth() - background.width) / 2;
@@ -128,7 +124,7 @@ class UIScreen extends GameScreen
 				case "sprites":
 					ParseSprites(xml);
 				case "textfields":
-					ParseTextFields(xml);
+					Parsetexts(xml);
 				default:
 			}
 		}
@@ -140,18 +136,18 @@ class UIScreen extends GameScreen
 	
 	private function ParseUIObjects(xml : Xml) : Void
 	{
-		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image : String;
-		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep : Float;
-		var textSize, totalFishes, minFishes, world, activeColor,pressColor, order : Int;
-		var checked, hasTitle, hasPager, flipX, lockedWorld, isFeedback, unlocking, completedWorld : Bool;
+		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
+		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold : Float;
+		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
+		var checked, hasTitle, hasPager, flipX, isFeedback : Bool;
 		var options : Array<Option>;
 		var sliderPages : Array<SliderPage>;
 		var uiObj : UIObject;
 		var page : SliderPage;
 		var tileLayer : Layer;
-		var worldInfo : SharedObject;
 		var pos : Point;
 		var font : Font;
+		var sliderTitle : SliderTitle;
 		
 		backActiveName = "";
 		backPressName = "";
@@ -159,7 +155,8 @@ class UIScreen extends GameScreen
 		spritesheet = xml.get("spritesheet");
 		layer = xml.get("layer");
 		order = Std.parseInt(xml.get("order"));
-				
+		
+		onSoundHandlerName = "OnSoundHandlerName";
 		tileLayer = GraphicManager.LoadTileLayer(spritesheet,order);
 		tileLayer.useTint = true;
 		AddLayer(layer,tileLayer);
@@ -174,12 +171,13 @@ class UIScreen extends GameScreen
 				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e2.get("x")), Std.parseFloat(e2.get("y"))));
 				uiObjX = pos.x;
 				uiObjY = pos.y;
-		
+				activeColor = 0xffffff;
+				pressColor = 0xffffff;
 				switch(e2.nodeName.toLowerCase())
 				{
 					case TextButton.XML:
 						
-						text = e2.get("text");
+						text = LanguageManager.Translate(e2.get("text"));
 						for (e3 in e2.elements())
 						{
 							if (e3.nodeName.toLowerCase() == "sprite")
@@ -198,12 +196,14 @@ class UIScreen extends GameScreen
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
+						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("size")));
 						font = TextManager.GetFont(e2.get("font"));
 						activeColor = Std.parseInt(e2.get("activeColor"));
 						pressColor = Std.parseInt(e2.get("pressColor"));
+						
+						fontId = e2.get("font");
 						//Button
-						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,font,textSize,activeColor,pressColor,backActiveName,backPressName);
+						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,fontId,textSize,activeColor,pressColor,backActiveName,backPressName,onSoundHandlerName);
 					case ImageButton.XML:
 						
 						for (e3 in e2.elements())
@@ -216,8 +216,10 @@ class UIScreen extends GameScreen
 								{
 									case "active":
 										backActiveName = e3.get("name");
+										activeColor = Std.parseInt(e3.get("color"));
 									case "pressed":
 										backPressName = e3.get("name");
+										pressColor = Std.parseInt(e3.get("color"));
 								}
 							}
 						}
@@ -225,16 +227,13 @@ class UIScreen extends GameScreen
 						rotation = e2.get("rotation") != null ? Std.parseFloat(e2.get("rotation")) : 0;
 						image = e2.get("image");
 						flipX = e2.get("flipX") == null ? false : e2.get("flipX") == "true";
-						//img = data.get(e2.get("image"));
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						activeColor = Std.parseInt(e2.get("activeColor"));
-						pressColor = Std.parseInt(e2.get("pressColor"));
-						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX);
+						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName);
 					case TextCheckBox.XML:
-						checkedText = e2.get("checkedText");
-						uncheckedText = e2.get("uncheckedText");
+						checkedText = LanguageManager.Translate(e2.get("checkedText"));
+						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
 						checked = e2.get("checked") == null ? false : e2.get("checked") == "true";
 						for (e3 in e2.elements())
 						{
@@ -275,16 +274,16 @@ class UIScreen extends GameScreen
 								{
 									case "active":
 										backActiveName = e3.get("name");
+										activeColor = Std.parseInt(e3.get("color"));
 									case "pressed":
 										backPressName = e3.get("name");
+										pressColor = Std.parseInt(e3.get("color"));
 								}
 							}
 						}
 						//Add on press handler name
 						onCheckHandlerName = e2.get("onCheck");
 						onUncheckHandlerName = e2.get("onUncheck");
-						activeColor = Std.parseInt(e2.get("activeColor"));
-						pressColor = Std.parseInt(e2.get("pressColor"));
 						
 						//Button
 						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText);
@@ -313,70 +312,59 @@ class UIScreen extends GameScreen
 						}
 						//Add on press handler name
 						onActionHandlerName = e2.get("onChange");
-						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
+						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("size")));
 						font = TextManager.GetFont(e2.get("font"));
 						activeColor = Std.parseInt(e2.get("activeColor"));
 						pressColor = Std.parseInt(e2.get("pressColor"));
+						fontId = e2.get("font");
 						//Button
-						uiObj = new TextSelect(id, tileLayer, uiObjX, uiObjY, onActionHandlerName, options, 0, font, textSize,activeColor,pressColor, backActiveName, backPressName);
+						uiObj = new TextSelect(id, tileLayer, uiObjX, uiObjY,fontId ,onActionHandlerName,options, 0, font, textSize,activeColor,pressColor, backActiveName, backPressName);
 					case Slider.XML:
 						sliderPages = new Array<SliderPage>();
 						
 						hasTitle = e2.get("hasTitle") == null ? true : e2.get("hasTitle") == "true";
 						hasPager = e2.get("hasPager") == null ? true : e2.get("hasPager") == "true";
-						titleX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("titleX")));
-						titleY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("titleY")));
+						
 						pagerX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("pagerX")));
 						pagerY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("pagerY")));
 						pagerSep = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("pagerSeparation")));
+						
 						onActionHandlerName = e2.get("onPress");
-						totalFishes = 0;
+						minSpeed = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("minSpeed")));
+						maxSpeed = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("maxSpeed")));
+						threshold = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("threshold")));
+						
+						sliderTitle = null;
+						if (hasTitle)
+						{
+							titleX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("titleX")));
+							titleY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("titleY")));
+							fontId = e2.get("titleFont");
+							textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("titleSize")));
+							titleColor = Std.parseInt(e2.get("titleColor"));
+							titleBackColor = Std.parseInt(e2.get("titleBackColor"));
+							titleBackSep = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("titleBackSeparation")));
+							
+							
+							sliderTitle = new SliderTitle(TextManager.GetFont(fontId).fontName, textSize, titleColor,titleBackColor,titleBackSep, GraphicManager.FixIntScale2Screen(3), new Point(titleX, titleY), "center", "middle", false);
+						}
+						
 						//Pages
 						for (e3 in e2.elements())
-						{							
+						{
 							if (e3.nodeName.toLowerCase() == SliderPage.XML)
 							{
 								page = new SliderPage(Std.parseInt(e3.get("number")), tileLayer, GraphicManager.FixFloat2ScreenX(Std.parseFloat(e3.get("x"))), GraphicManager.FixFloat2ScreenY(Std.parseFloat(e3.get("y"))), LanguageManager.Translate(e3.get("title")).toUpperCase());
-								/*for (e4 in e3.elements())
-								{
-									switch(e4.nodeName.toLowerCase())
-									{
-										case WorldButton.XML:
-											world = Std.parseInt(e4.get("number"));
-											worldInfo = Helper.LoadWorldInfo(world);
-											totalFishes += worldInfo.data.fishes;
-											minFishes = Std.parseInt(e4.get("min-fishes"));
-											//lockedWorld = worldInfo.data.locked == "yes" || totalFishes < minFishes;
-											unlocking = worldInfo.data.locked == "yes" && totalFishes >= minFishes;
-											lockedWorld = totalFishes < minFishes || unlocking;
-											//Debugging
-											if(Globals.DEBUG_LEVELS)
-												lockedWorld = false;
-												
-											if (world == Globals.FIRST_WORLD)
-												completedWorld = worldInfo.data.fishes >= (Globals.NUMBER_OF_FISHES * Globals.NUMBER_OF_LEVELS) - Globals.NUMBER_OF_FISHES * 3;
-											else
-												completedWorld = worldInfo.data.fishes >= (Globals.NUMBER_OF_FISHES * Globals.NUMBER_OF_LEVELS);
-											
-											trace(totalFishes);
-											trace((Globals.NUMBER_OF_FISHES * Globals.NUMBER_OF_LEVELS));
-											sliderEle = new WorldButton(e4.get("name"), tileLayer, Helper.FixFloat2ScreenX(Std.parseFloat(e4.get("x"))), Helper.FixFloat2ScreenY(Std.parseFloat(e4.get("y"))), world,onActionHandlerName,"",lockedWorld,minFishes,page,unlocking,completedWorld);
-											sliderEle.SetScale(Helper.GetFixScale());
-											page.AddElement(sliderEle);
-										case ComingSoonWorldButton.XML:
-											sliderEle = new ComingSoonWorldButton(e4.get("name"), tileLayer, Helper.FixFloat2ScreenX(Std.parseFloat(e4.get("x"))), Helper.FixFloat2ScreenY(Std.parseFloat(e4.get("y"))), Std.parseInt(e4.get("number")));
-											sliderEle.SetScale(Helper.GetFixScale());
-											page.AddElement(sliderEle);
-										default:
-									}
-								}*/
+								
+								for (e4 in e3.elements())
+									ParseSliderElements(tileLayer,page, e4,onActionHandlerName);
 								
 								sliderPages.push(page);
 							}
 						}
 						
 						//Button
-						//uiObj = new Slider(id, tileLayer, uiObjX, uiObjY, sliderPages,"",0,hasTitle,titleX,titleY,hasPager,pagerX,pagerY,pagerSep);// onActionHandlerName);
+						uiObj = new Slider(id, tileLayer, uiObjX, uiObjY, sliderPages, onActionHandlerName, 0, GraphicManager.GetWidth(), minSpeed, maxSpeed, threshold, sliderTitle , 1 ,hasPager, pagerX, pagerY, pagerSep);// onActionHandlerName);
 					default:	
 				}
 				
@@ -386,17 +374,26 @@ class UIScreen extends GameScreen
 					//if(isFeedback)
 					//	uiObj.SetEffect(Effect.Zoom);
 					//uiObj.LoadContent();
-					AddUIbject(uiObj);
+					AddUIbject(id,uiObj);
 				}
 			}
 		//}
 	}
 	
-	private function ParseTextFields(xml : Xml) : Map<String,Text>
+	private function OnSoundHandlerName() : Void
+	{
+		SoundManager.PlayLoadedSound("ui-object-click.wav");
+	}
+	
+	private function ParseSliderElements(tileLayer : TileLayer,page : SliderPage, elementType : Xml,actionHandlerName : String) : Void
+	{
+	}
+	
+	private function Parsetexts(xml : Xml) : Map<String,Text>
 	{
 		var font, text, xAlign, yAlign : String;
 		var translate : Bool;
-		var size, color, letterSpacing : Int;
+		var size, color, letterSpacing,order : Int;
 		var textField : Text;
 		var pos : Point;
 		var texts : Map<String,Text>;
@@ -406,25 +403,23 @@ class UIScreen extends GameScreen
 		{
 			if (e.nodeType == Xml.Element)
 			{
+				
 				name = e.get("name");
 				font = e.get("font");
-				text = e.get("value");// translate ? LanguageManager.Translate(e.get("value")) : e.get("value");
+				translate = e.get("translate") == null ? true : e.get("translate") == "true";
+				text = translate ? LanguageManager.Translate(e.get("value")) : e.get("value");
 				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e.get("x")), Std.parseFloat(e.get("y"))));
 				size =  GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("size")));
+				order =  e.get("order") == null ? 0 : Std.parseInt(e.get("order"));
 				color = Std.parseInt(e.get("color"));
 				
-				/*translate = e.get("translate") == null ? true : e.get("translate") == "true";
-				
-				
-				
 				xAlign = e.get("x-align") == null ? "center" : e.get("x-align");
-				yAlign = e.get("y-align") == null ? "center" : e.get("y-align");
+				yAlign = e.get("y-align") == null ? "middle" : e.get("y-align");
 				
-				letterSpacing = GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("letterspacing")));*/
+				letterSpacing = GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("letterspacing")));
 				
-					
-				textField = TextManager.CreateText(font, text, pos, size, color);// , letterSpacing, pos, xAlign, yAlign);
-				trace(textField);
+				textField = TextManager.CreateText(font, text, pos, size, color, letterSpacing, xAlign, yAlign, order);
+				
 				texts.set(name, textField);
 				
 				AddText(name, textField);
@@ -441,7 +436,7 @@ class UIScreen extends GameScreen
 		var sprite : TileSprite;
 		var tilelayer : Layer;
 		var elements : Map<String,TileSprite>;
-		var order : Int;
+		var order, flipHor, flipVer : Int;
 		
 		spritesheet = xml.get("spritesheet");
 		layer = xml.get("layer");
@@ -467,13 +462,16 @@ class UIScreen extends GameScreen
 						spriteX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("x")));
 						spriteY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("y")));
 						sprite = new TileSprite(GetLayer(layer), spriteName);
-						sprite.r = 1;
-						sprite.g = 1;
-						sprite.b = 1;
+						sprite.r = e2.get("r") == null ? 1 : Std.parseFloat(e2.get("r"))/255;
+						sprite.g = e2.get("g") == null ? 1 : Std.parseFloat(e2.get("g"))/255;
+						sprite.b = e2.get("b") == null ? 1 : Std.parseFloat(e2.get("b"))/255;
 						sprite.x = spriteX;
 						sprite.y = spriteY;
-						sprite.scaleX = GraphicManager.GetFixScale();
-						sprite.scaleY = GraphicManager.GetFixScale();
+						
+						flipHor = e2.get("flip-hor") == null ? 1 : -1;
+						flipVer = e2.get("flip-ver") == null ? 1 : -1;
+						sprite.scaleX = GraphicManager.GetFixScale() * flipHor;
+						sprite.scaleY = GraphicManager.GetFixScale() * flipVer;
 						
 						elements.set(id, sprite);
 						AddSprite(id,layer,sprite);
@@ -485,12 +483,16 @@ class UIScreen extends GameScreen
 		return elements;
 	}
 	
-	public function AddUIbject(uiObj : UIObject)
+	public function AddUIbject(key : String,uiObj : UIObject)
 	{
 		if (uiObj != null)
 		{
-			uiObjects.push(uiObj);
-			uiObj.layer.addChild(uiObj);	
+			if (!uiObjects.exists(key))
+			{
+				uiObjects.set(key, uiObj);
+				uiObj.layer.addChild(uiObj);	
+			}
+			
 			//AddToLayer(UI_LAYER,uiObj);
 		}
 	}
@@ -517,10 +519,16 @@ class UIScreen extends GameScreen
 	{
 		super.Clean();
 		
-		for (uiObj in uiObjects)
+		for (k in uiObjects.keys())
 		{
-			uiObj.Clean();
-			uiObjects.remove(uiObj);
+			uiObjects.get(k).Clean();
+			uiObjects.remove(k);
+		}
+		
+		for (k in texts.keys())
+		{
+			removeChild(texts.get(k));
+			texts.remove(k);
 		}
 
 		if(background != null)
@@ -593,11 +601,14 @@ class UIScreen extends GameScreen
 		{
 			for (o in uiObjects)
 			{
-				if (downUIObj == o)
+				if (o != null && downUIObj != null)
 				{
-					downIds.remove(cursorId);
-					if (o.HandleMouseUpEvent(cursorPos, this,downIds.length > 0,cursorId) && downIds.length <= 0)
-						downUIObj = null;
+					if (downUIObj == o)
+					{
+						downIds.remove(cursorId);
+						if (o.HandleMouseUpEvent(cursorPos, this,downIds.length > 0,cursorId) && downIds.length <= 0)
+							downUIObj = null;
+					}
 				}
 			}
 
@@ -625,9 +636,9 @@ class UIScreen extends GameScreen
 			{
 				if (isPopup)
 				{
-					if (popupVeil != null)
+					if (backgroundColor != null)
 					{
-						popupVeil.alpha = closingAlpha;// * Globals.VEIL_ALPHA;
+						backgroundColor.alpha = closingAlpha;// * Globals.VEIL_ALPHA;
 					}
 				}
 				
@@ -666,6 +677,13 @@ class UIScreen extends GameScreen
 				
 				uiObj.Update(gameTime);
 			}
+			
+			for (t in texts)
+				t.Update(gameTime);
+			
+				
+			//Timer Manager System
+			timerManager.Update(gameTime);
 		}
 	}
 	
@@ -681,7 +699,34 @@ class UIScreen extends GameScreen
 	override public function AddElementsToRender() : Void
 	{
 		super.AddElementsToRender();
+		
+		var orderedTexts : Array<Text>;
+		
+		orderedTexts = new Array<Text>();
+		
 		for (t in texts)
+			orderedTexts.push(t);
+		
+		//Order
+		orderedTexts.sort(SortText);
+			
+		//Texts
+		for (t in orderedTexts)
 			addChild(t);
+	}
+	
+	private function SortText(x : Text,y : Text) : Int
+	{
+		if (x.GetOrder() == y.GetOrder())
+			return 0;
+		else if (x.GetOrder() > y.GetOrder())
+			return 1;
+		else
+			return -1;
+	}
+	
+	public function StartTimerTask(duration : Float, onComplete : Void -> Void, onRunning : Float -> Void = null) : Void
+	{
+		timerManager.StartTimerTask(duration, onComplete, onRunning);
 	}
 }

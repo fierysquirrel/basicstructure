@@ -1,19 +1,15 @@
-package fs.basicstructure;
+package;
 
 import flash.display.Sprite;
 import flash.events.Event;
-import flash.Lib;
-import fs.graphicmanager.GraphicManager;
-import fs.languagemanager.LanguageManager;
-import fs.screenmanager.ScreenManager;
-import fs.screenmanager.events.GameEvents;
-import fs.soundmanager.SoundManager;
-import fs.textmanager.TextManager;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.TouchEvent;
+import flash.Lib;
 import flash.ui.Multitouch;
+import flash.system.Capabilities;
 import flash.ui.MultitouchInputMode;
+
 
 /**
  * 
@@ -33,6 +29,8 @@ class Game extends Sprite
 	
 	private var screenManager : ScreenManager;
 	
+	private var eventManager : EventManager;
+	
 	private var graphicManager : GraphicManager;
 	
 	private var textManager : TextManager;
@@ -41,9 +39,15 @@ class Game extends Sprite
 	
 	private var languageManager : LanguageManager;
 	
+	private var analyticsManager : AnalyticsManager;
+	
+	private var debugger : Debugger;
+	
 	private var screenWidth : Int;
 	
 	private var screenHeight : Int;
+	
+	private var backgroundsPath : String;
 	
 	private var spritesPath : String;
 	
@@ -53,7 +57,11 @@ class Game extends Sprite
 	
 	private var soundsPath : String;
 	
+	private var musicPath : String;
+	
 	private var multitouchSupported : Bool;
+	
+	private var containers : Array<Sprite>;
 
 	/* ENTRY POINT */
 	function resize(e) 
@@ -65,11 +73,28 @@ class Game extends Sprite
 	
 	function init() 
 	{
+		var gameContainer, debugContainer : Sprite;
+		
+		//Containers
+		gameContainer = new Sprite();
+		debugContainer = new Sprite();
+		
+		//Unattach mouse to containers
+		gameContainer.mouseEnabled = false;
+		debugContainer.mouseEnabled = false;
+		
+		//Order matters here, if debugContainer is not in the front, you won't see it.
+		addChild(gameContainer);
+		addChild(debugContainer);
+		
 		if (inited) return;
 			inited = true;
 
+		//Event Manager
+		eventManager = EventManager.InitInstance();
+		
 		//Graphic Manager
-		graphicManager = GraphicManager.InitInstance(screenWidth,screenHeight,spritesPath);
+		graphicManager = GraphicManager.InitInstance(screenWidth,screenHeight,backgroundsPath,spritesPath);
 		
 		//Text Manager
 		textManager = TextManager.InitInstance(fontsPath);
@@ -78,10 +103,16 @@ class Game extends Sprite
 		languageManager = LanguageManager.InitInstance(languagesPath);
 		
 		//Sound Manager
-		soundManager = SoundManager.InitInstance(soundsPath);
+		soundManager = SoundManager.InitInstance(soundsPath,musicPath);
+		
+		//Analytics Manager
+		analyticsManager = AnalyticsManager.InitInstance();
+		
+		//Debugging
+		debugger = Debugger.InitInstance(debugContainer,GraphicManager.GetWidth(),GraphicManager.GetHeight());
 		
 		//Screen manager
-		screenManager = ScreenManager.InitInstance(this);
+		screenManager = ScreenManager.InitInstance(gameContainer);
 		//TODO: check this event and the rest, generalize it and re-structure
 		//ScreenManager.AddEvent(GameEvents.EVENT_EXIT_GAME, EventsHandler);
 		
@@ -91,6 +122,7 @@ class Game extends Sprite
 		//Input Events
 		multitouchSupported = Multitouch.supportsTouchEvents;
 		
+		//TODO: Fix this, multituchsupported is not right
 		if (multitouchSupported)
 		{
 			Multitouch.inputMode = MultitouchInputMode.TOUCH_POINT;
@@ -116,19 +148,30 @@ class Game extends Sprite
 		
 		// Assets:
 		// nme.Assets.getBitmapData("img/assetname.jpg");
+		
+		//Debugger.Print("architecture: " + Capabilities.cpuArchitecture);
+		Debugger.Print("language: " + Capabilities.language);
+		//Debugger.Print("manufacturer: " + Capabilities.manufacturer);
+		Debugger.Print("os: " + Capabilities.os);
+		//Debugger.Print("aspect ratio: " + Capabilities.pixelAspectRatio);
+		//Debugger.Print("player type: " + Capabilities.playerType);
+		//Debugger.Print("dpi: " + Capabilities.screenDPI);
+		//Debugger.Print("version: " + Capabilities.version);
 	}
 
 	/* SETUP */
-	public function new(screenWidth : Int = 0, screenHeight : Int = 0, spritesPath : String = "",soundsPath : String = "", fontsPath : String = "", languagesPath : String = "") 
+	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "") 
 	{
 		super();
 		
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
+		this.backgroundsPath = backgroundsPath;
 		this.spritesPath = spritesPath;
 		this.fontsPath = fontsPath;
 		this.languagesPath = languagesPath;
 		this.soundsPath = soundsPath;
+		this.musicPath = musicPath;
 		
 		addEventListener(Event.ADDED_TO_STAGE, added);
 	}
@@ -142,6 +185,7 @@ class Game extends Sprite
 		//Basic loops
 		ScreenManager.Update(deltaTime);
 		ScreenManager.Draw(graphics);
+		SoundManager.Update(deltaTime);
 	}
 
 	function added(e) 

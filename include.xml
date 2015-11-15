@@ -10,4 +10,8 @@
 	<haxelib name="graphicmanager" />
 	<haxelib name="languagemanager" />
 	<haxelib name="textmanager" />
+	<haxelib name="timermanager" />
+	<haxelib name="analyticsmanager" />
+	<haxelib name="debugger" />
+	<haxelib name="eventmanager" />
 </project>
