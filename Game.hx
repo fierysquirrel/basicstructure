@@ -7,7 +7,6 @@ import flash.events.MouseEvent;
 import flash.events.TouchEvent;
 import flash.Lib;
 import flash.ui.Multitouch;
-import flash.system.Capabilities;
 import flash.ui.MultitouchInputMode;
 
 
@@ -150,9 +149,9 @@ class Game extends Sprite
 		// nme.Assets.getBitmapData("img/assetname.jpg");
 		
 		//Debugger.Print("architecture: " + Capabilities.cpuArchitecture);
-		Debugger.Print("language: " + Capabilities.language);
+		//Debugger.Print("language: " + Capabilities.language);
 		//Debugger.Print("manufacturer: " + Capabilities.manufacturer);
-		Debugger.Print("os: " + Capabilities.os);
+		//Debugger.Print("os: " + Capabilities.os);
 		//Debugger.Print("aspect ratio: " + Capabilities.pixelAspectRatio);
 		//Debugger.Print("player type: " + Capabilities.playerType);
 		//Debugger.Print("dpi: " + Capabilities.screenDPI);
