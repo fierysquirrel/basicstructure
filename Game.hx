@@ -122,7 +122,7 @@ class Game extends Sprite
 		multitouchSupported = Multitouch.supportsTouchEvents;
 		
 		//TODO: Fix this, multituchsupported is not right
-		#if windows || mac
+		#if(windows || mac)
 			Lib.current.stage.addEventListener(MouseEvent.MOUSE_DOWN, HandleIOEvent);
 			Lib.current.stage.addEventListener(MouseEvent.MOUSE_UP, HandleIOEvent);
 			Lib.current.stage.addEventListener(MouseEvent.MOUSE_MOVE, HandleIOEvent);
