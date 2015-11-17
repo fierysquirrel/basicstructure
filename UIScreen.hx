@@ -346,7 +346,7 @@ class UIScreen extends GameScreen
 							titleBackSep = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("titleBackSeparation")));
 							
 							
-							sliderTitle = new SliderTitle(TextManager.GetFont(fontId).fontName, textSize, titleColor,titleBackColor,titleBackSep, GraphicManager.FixIntScale2Screen(3), new Point(titleX, titleY), "center", "middle", false);
+							sliderTitle = new SliderTitle(TextManager.GetFont(fontId).fontName, textSize, titleColor,titleBackColor,titleBackSep, GraphicManager.FixIntScale2Screen(3), new Point(titleX, titleY), "center", "up", false);
 						}
 						
 						//Pages

@@ -8,6 +8,8 @@ import flash.events.TouchEvent;
 import flash.Lib;
 import flash.ui.Multitouch;
 import flash.ui.MultitouchInputMode;
+import flash.ui.Keyboard;
+import screenevents.GameEvents;
 
 
 /**
@@ -61,13 +63,13 @@ class Game extends Sprite
 	private var multitouchSupported : Bool;
 	
 	private var containers : Array<Sprite>;
-
+	
 	/* ENTRY POINT */
-	function resize(e) 
+	function resize(e : Event) 
 	{
 		if (!inited) 
 			init();
-		// else (resize or orientation change)
+		//else //(resize or orientation change)
 	}
 	
 	function init() 
@@ -112,8 +114,6 @@ class Game extends Sprite
 		
 		//Screen manager
 		screenManager = ScreenManager.InitInstance(gameContainer);
-		//TODO: check this event and the rest, generalize it and re-structure
-		//ScreenManager.AddEvent(GameEvents.EVENT_EXIT_GAME, EventsHandler);
 		
 		//Main loop
 		Lib.current.stage.addEventListener(Event.ENTER_FRAME, MainLoop);
@@ -148,6 +148,7 @@ class Game extends Sprite
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, HandleIOEvent);
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, HandleIOEvent);
 		
+		ScreenManager.AddEvent(GameEvents.EVENT_EXIT_GAME, HandleGameExit);
 		// Stage:
 		// stage.stageWidth x stage.stageHeight @ stage.dpiScale
 		
@@ -235,7 +236,7 @@ class Game extends Sprite
 		}
 	}
 	
-	public function Exit()
+	public function HandleGameExit(e : Event) : Void
 	{
 		//TODO: exit properly
 	}
