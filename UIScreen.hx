@@ -45,6 +45,8 @@ class UIScreen extends GameScreen
 		closingAlpha = 1;
 		isClosed = false;
 		timerManager = new TimerManager();
+		
+		EventManager.AddListener(TimerEvent.TYPE, OnTimerListener);
 	}
 	
 	override public function LoadContent():Void 
@@ -380,6 +382,11 @@ class UIScreen extends GameScreen
 		//}
 	}
 	
+	private function OnTimerListener(event : TimerEvent) : Void
+	{
+		StartTimerTask(event.duration, event.onComplete, event.onRunning);
+	}
+	
 	private function OnSoundHandlerName() : Void
 	{
 		SoundManager.PlayLoadedSound("ui-object-click.wav");
@@ -533,6 +540,8 @@ class UIScreen extends GameScreen
 
 		if(background != null)
 			background = null;
+			
+		EventManager.RemoveListener(TimerEvent.TYPE, OnTimerListener);
 	}
 	
 	override private function HandleCursorDown(cursorPos : Point,cursorId : Int) : Void
