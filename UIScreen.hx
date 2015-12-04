@@ -47,6 +47,7 @@ class UIScreen extends GameScreen
 		timerManager = new TimerManager();
 		
 		EventManager.AddListener(TimerEvent.TYPE, OnTimerListener);
+		EventManager.AddListener(TaskEvent.TYPE, OnTaskListener);
 	}
 	
 	override public function LoadContent():Void 
@@ -139,7 +140,7 @@ class UIScreen extends GameScreen
 	private function ParseUIObjects(xml : Xml) : Void
 	{
 		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
-		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold : Float;
+		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
 		var checked, hasTitle, hasPager, flipX, isFeedback : Bool;
 		var options : Array<Option>;
@@ -229,10 +230,12 @@ class UIScreen extends GameScreen
 						rotation = e2.get("rotation") != null ? Std.parseFloat(e2.get("rotation")) : 0;
 						image = e2.get("image");
 						flipX = e2.get("flipX") == null ? false : e2.get("flipX") == "true";
+						imageOffsetX = e2.get("offsetX") == null ? 0 : GraphicManager.FixFloatScale2Screen(Std.parseFloat(e2.get("offsetX")));
+						imageOffsetY = e2.get("offsetY") == null ? 0 : GraphicManager.FixFloatScale2Screen(Std.parseFloat(e2.get("offsetY")));
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName);
+						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName,new Point(imageOffsetX,imageOffsetY));
 					case TextCheckBox.XML:
 						checkedText = LanguageManager.Translate(e2.get("checkedText"));
 						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
@@ -384,7 +387,12 @@ class UIScreen extends GameScreen
 	
 	private function OnTimerListener(event : TimerEvent) : Void
 	{
-		StartTimerTask(event.duration, event.onComplete, event.onRunning);
+		timerManager.StartTimerTask(event.duration, event.onComplete, event.onRunning);
+	}
+	
+	private function OnTaskListener(event : TaskEvent) : Void
+	{
+		timerManager.StartTask(event.goal, event.ini, event.step, event.onComplete, event.onRunning);
 	}
 	
 	private function OnSoundHandlerName() : Void
@@ -732,10 +740,5 @@ class UIScreen extends GameScreen
 			return 1;
 		else
 			return -1;
-	}
-	
-	public function StartTimerTask(duration : Float, onComplete : Void -> Void, onRunning : Float -> Void = null) : Void
-	{
-		timerManager.StartTimerTask(duration, onComplete, onRunning);
 	}
 }
