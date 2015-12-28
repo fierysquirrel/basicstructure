@@ -18,8 +18,13 @@ class UIScreen extends GameScreen
 {	
 	static public var UI_LAYER : String = "UILayer";
 	
+	static public var GLOBALS_FILENAME : String = "globals.xml";
+	
+	private var viewPath : String;
+	private var viewName : String;
 	private var view : String;
 	
+	private var globals : Map<String,String>;
 	private var uiObjects : Map<String,UIObject>;
 	private var isPressingObj : Bool;
 	private var backgroundLayer : Sprite;
@@ -32,11 +37,14 @@ class UIScreen extends GameScreen
 	private var texts : Map<String,Text>;
 	private var timerManager : TimerManager;
 	
-	public function new(name : String,x : Float,y : Float,viewPath : String, isPopup : Bool = false) 
+	public function new(name : String,x : Float,y : Float,viewPath : String,viewName : String, isPopup : Bool = false) 
 	{
 		super(name,x,y,isPopup);
 		
-		this.view = viewPath;
+		this.viewPath = viewPath;
+		this.viewName = viewName;
+		this.view = viewPath + viewName;
+		globals = new Map<String,String>();
 		uiObjects = new Map<String,UIObject>();
 		texts = new Map<String,Text>();
 		downUIObj = null;
@@ -58,10 +66,34 @@ class UIScreen extends GameScreen
 
 		addChild(backgroundLayer);
 
+		//Parse Globals
+		ParseGlobals(viewPath + GLOBALS_FILENAME);
 		//Parse view
 		ParseView(view);
 			
 		Render();
+	}
+	
+	private function ParseGlobals(view : String) :Void
+	{
+		var str : String;
+		var xml : Xml;
+		
+		try
+		{
+			if (Assets.exists(view))
+			{
+				str = Assets.getText(view);
+				xml = Xml.parse(str).firstElement();
+				
+				for (e in xml.elements())
+					globals.set(e.get("name"), e.get("value"));
+			}
+		}
+		catch (e : String)
+		{
+			trace(e);
+		}
 	}
 	
 	private function ParseView(view : String) :Void
@@ -174,8 +206,8 @@ class UIScreen extends GameScreen
 				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e2.get("x")), Std.parseFloat(e2.get("y"))));
 				uiObjX = pos.x;
 				uiObjY = pos.y;
-				activeColor = 0xffffff;
-				pressColor = 0xffffff;
+				activeColor = globals.exists("buttonActiveColor") ? Std.parseInt(globals.get("buttonActiveColor")) : 0xffffff;
+				pressColor = globals.exists("buttonPressColor") ? Std.parseInt(globals.get("buttonPressColor")) : 0xffffff;
 				switch(e2.nodeName.toLowerCase())
 				{
 					case TextButton.XML:
@@ -201,12 +233,16 @@ class UIScreen extends GameScreen
 						onActionHandlerName = e2.get("onPress");
 						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("size")));
 						font = TextManager.GetFont(e2.get("font"));
-						activeColor = Std.parseInt(e2.get("activeColor"));
-						pressColor = Std.parseInt(e2.get("pressColor"));
+						//Active Color
+						if(e2.get("activeColor") != null)
+							activeColor = Std.parseInt(e2.get("activeColor"));
+						//Press Color
+						if(e2.get("pressColor") != null)
+							pressColor = Std.parseInt(e2.get("pressColor"));
 						
 						fontId = e2.get("font");
 						//Button
-						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,fontId,textSize,activeColor,pressColor,backActiveName,backPressName,onSoundHandlerName);
+						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,fontId,textSize,activeColor,pressColor,backActiveName,backPressName,0,onSoundHandlerName);
 					case ImageButton.XML:
 						
 						for (e3 in e2.elements())
@@ -219,10 +255,14 @@ class UIScreen extends GameScreen
 								{
 									case "active":
 										backActiveName = e3.get("name");
-										activeColor = Std.parseInt(e3.get("color"));
+										//Active Color
+										if(e3.get("color") != null)
+											activeColor = Std.parseInt(e3.get("color"));
 									case "pressed":
 										backPressName = e3.get("name");
-										pressColor = Std.parseInt(e3.get("color"));
+										//Press Color
+										if(e3.get("color") != null)
+											pressColor = Std.parseInt(e3.get("color"));
 								}
 							}
 						}
@@ -433,7 +473,7 @@ class UIScreen extends GameScreen
 				
 				letterSpacing = GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("letterspacing")));
 				
-				textField = TextManager.CreateText(font, text, pos, size, color, letterSpacing, xAlign, yAlign, order);
+				textField = TextManager.CreateText(font, text, pos, size, color, letterSpacing, xAlign, yAlign,false, order);
 				
 				texts.set(name, textField);
 				
