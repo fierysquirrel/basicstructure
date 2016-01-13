@@ -487,7 +487,7 @@ class UIScreen extends GameScreen
 	private function ParseSprites(xml : Xml) : Map<String,TileSprite>
 	{
 		var spritesheet, spriteName, layer, data, id : String;
-		var spriteX, spriteY : Float;
+		var spriteX, spriteY, rot, sca : Float;
 		var sprite : TileSprite;
 		var tilelayer : Layer;
 		var elements : Map<String,TileSprite>;
@@ -519,14 +519,17 @@ class UIScreen extends GameScreen
 						sprite = new TileSprite(GetLayer(layer), spriteName);
 						sprite.r = e2.get("r") == null ? 1 : Std.parseFloat(e2.get("r"))/255;
 						sprite.g = e2.get("g") == null ? 1 : Std.parseFloat(e2.get("g"))/255;
-						sprite.b = e2.get("b") == null ? 1 : Std.parseFloat(e2.get("b"))/255;
+						sprite.b = e2.get("b") == null ? 1 : Std.parseFloat(e2.get("b")) / 255;
+						rot = e2.get("rotation") == null ? 0 : MathHelper.ConvertDegToRad(Std.parseFloat(e2.get("rotation")));
+						sca = e2.get("scale") == null ? 1 : Std.parseFloat(e2.get("scale"));
 						sprite.x = spriteX;
 						sprite.y = spriteY;
 						
+						sprite.rotation = rot;
 						flipHor = e2.get("flip-hor") == null ? 1 : -1;
 						flipVer = e2.get("flip-ver") == null ? 1 : -1;
-						sprite.scaleX = GraphicManager.GetFixScale() * flipHor;
-						sprite.scaleY = GraphicManager.GetFixScale() * flipVer;
+						sprite.scaleX = GraphicManager.GetFixScale() * flipHor * sca;
+						sprite.scaleY = GraphicManager.GetFixScale() * flipVer * sca;
 						
 						elements.set(id, sprite);
 						AddSprite(id,layer,sprite);
