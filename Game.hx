@@ -62,6 +62,8 @@ class Game extends Sprite
 	
 	private var multitouchSupported : Bool;
 	
+	private var googleAnalyticsID : String;
+	
 	private var containers : Array<Sprite>;
 	
 	/* ENTRY POINT */
@@ -145,6 +147,11 @@ class Game extends Sprite
 		}
 		#end
 		
+		#if mobile
+		if (googleAnalyticsID != "")
+			GAnalytics.startSession(googleAnalyticsID);
+		#end
+		
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_DOWN, HandleIOEvent);
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, HandleIOEvent);
 		
@@ -166,7 +173,7 @@ class Game extends Sprite
 	}
 
 	/* SETUP */
-	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "") 
+	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "", googleAnalyticsID : String = "") 
 	{
 		super();
 		
@@ -178,6 +185,7 @@ class Game extends Sprite
 		this.languagesPath = languagesPath;
 		this.soundsPath = soundsPath;
 		this.musicPath = musicPath;
+		this.googleAnalyticsID = googleAnalyticsID;
 		
 		addEventListener(Event.ADDED_TO_STAGE, added);
 	}
@@ -239,5 +247,9 @@ class Game extends Sprite
 	public function HandleGameExit(e : Event) : Void
 	{
 		//TODO: exit properly
+		#if mobile
+		if (googleAnalyticsID != "")
+			GAnalytics.stopSession();
+		#end
 	}
 }

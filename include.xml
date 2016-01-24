@@ -3,6 +3,10 @@
 	<haxelib name="openfl" />
 	<haxelib name="actuate" />
 	<haxelib name="tilelayer" />
+	<!--Extensions-->
+	<section if="mobile">
+		<haxelib name="ganalytics" />
+	</section>
 	<!--Fiery Squirrel Modules-->
 	<haxelib name="ui" />
 	<haxelib name="screenmanager" />

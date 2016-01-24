@@ -56,6 +56,11 @@ class UIScreen extends GameScreen
 		
 		EventManager.AddListener(TimerEvent.TYPE, OnTimerListener);
 		EventManager.AddListener(TaskEvent.TYPE, OnTaskListener);
+		
+		//Google Analytics
+		#if mobile		
+		GAnalytics.trackScreen(name);
+		#end
 	}
 	
 	override public function LoadContent():Void 
