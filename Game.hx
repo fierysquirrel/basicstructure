@@ -1,16 +1,16 @@
 package;
 
+import flash.Lib;
 import flash.display.Sprite;
 import flash.events.Event;
 import flash.events.KeyboardEvent;
 import flash.events.MouseEvent;
 import flash.events.TouchEvent;
-import flash.Lib;
 import flash.ui.Multitouch;
 import flash.ui.MultitouchInputMode;
-import flash.ui.Keyboard;
 import screenevents.GameEvents;
-
+import openfl.net.SharedObject;
+import openfl.net.SharedObjectFlushStatus;
 
 /**
  * 
@@ -24,6 +24,16 @@ import screenevents.GameEvents;
  */
 class Game extends Sprite 
 {
+	/*Default paths*/
+	static public var FONTS_PATH : String 		= "assets/fonts/";
+	static public var MUSIC_PATH : String 		= "assets/soundtracks/";
+	static public var BACKGROUNDS_PATH : String	= "assets/backgrounds/";
+	static public var SOUNDS_PATH : String 		= "assets/sounds/";
+	static public var SPRITES_PATH : String 		= "assets/sprites/";
+	static public var LANGUAGES_PATH : String 	= "assets/languages/";
+	
+	static public var USER_ID : String;
+	
 	private var inited : Bool;
 	
 	private var lastTime : Float;
@@ -62,6 +72,8 @@ class Game extends Sprite
 	
 	private var multitouchSupported : Bool;
 	
+	private var analyticsDB : String;
+	
 	private var googleAnalyticsID : String;
 	
 	private var containers : Array<Sprite>;
@@ -74,9 +86,14 @@ class Game extends Sprite
 		//else //(resize or orientation change)
 	}
 	
+	/*
+	 * Override this method to initialize your game.
+	 * Since many systems are initialized here, you should initialize yours AFTER this method runs.
+	 * */
 	function init() 
 	{
 		var gameContainer, debugContainer : Sprite;
+		var userSharedObj : SharedObject;
 		
 		//Containers
 		gameContainer = new Sprite();
@@ -89,6 +106,18 @@ class Game extends Sprite
 		//Order matters here, if debugContainer is not in the front, you won't see it.
 		addChild(gameContainer);
 		addChild(debugContainer);
+		
+		//User data
+		userSharedObj = SharedObject.getLocal("user");
+		
+		if (userSharedObj.data.id == null)
+		{
+			USER_ID = MathHelper.CreateID(50);
+			userSharedObj.data.id = USER_ID;
+			SaveData(userSharedObj);
+		}
+		else
+			USER_ID = userSharedObj.data.id;
 		
 		if (inited) return;
 			inited = true;
@@ -109,7 +138,7 @@ class Game extends Sprite
 		soundManager = SoundManager.InitInstance(soundsPath,musicPath);
 		
 		//Analytics Manager
-		analyticsManager = AnalyticsManager.InitInstance();
+		analyticsManager = AnalyticsManager.InitInstance(analyticsDB);
 		
 		//Debugging
 		debugger = Debugger.InitInstance(debugContainer,GraphicManager.GetWidth(),GraphicManager.GetHeight());
@@ -156,35 +185,46 @@ class Game extends Sprite
 		Lib.current.stage.addEventListener(KeyboardEvent.KEY_UP, HandleIOEvent);
 		
 		ScreenManager.AddEvent(GameEvents.EVENT_EXIT_GAME, HandleGameExit);
-		// Stage:
-		// stage.stageWidth x stage.stageHeight @ stage.dpiScale
+	}
+	
+	//ESTA FUNCTION NO VA AQUI, HAY QUE REESTRUCTURAR
+	public static function SaveData(sharedObj : SharedObject) : Dynamic
+	{
+		// Prepare to save.. with some checks
+		#if ( cpp || neko )
+			// Android didn't wanted SharedObjectFlushStatus not to be a String
+			var flushStatus : SharedObjectFlushStatus = null;
+		#else
+			// Flash wanted it very much to be a String
+			var flushStatus : String = null;
+		#end
+
+		try 
+		{
+			flushStatus = sharedObj.flush() ;// Save the object
+		} 
+		catch ( e:Dynamic ) 
+		{
+			trace('couldn\'t write...');
+		}
 		
-		// Assets:
-		// nme.Assets.getBitmapData("img/assetname.jpg");
-		
-		//Debugger.Print("architecture: " + Capabilities.cpuArchitecture);
-		//Debugger.Print("language: " + Capabilities.language);
-		//Debugger.Print("manufacturer: " + Capabilities.manufacturer);
-		//Debugger.Print("os: " + Capabilities.os);
-		//Debugger.Print("aspect ratio: " + Capabilities.pixelAspectRatio);
-		//Debugger.Print("player type: " + Capabilities.playerType);
-		//Debugger.Print("dpi: " + Capabilities.screenDPI);
-		//Debugger.Print("version: " + Capabilities.version);
+		return flushStatus;
 	}
 
 	/* SETUP */
-	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "", googleAnalyticsID : String = "") 
+	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "", analyticsDB : String = "", googleAnalyticsID : String = "") 
 	{
 		super();
 		
 		this.screenWidth = screenWidth;
 		this.screenHeight = screenHeight;
-		this.backgroundsPath = backgroundsPath;
-		this.spritesPath = spritesPath;
-		this.fontsPath = fontsPath;
-		this.languagesPath = languagesPath;
-		this.soundsPath = soundsPath;
-		this.musicPath = musicPath;
+		this.backgroundsPath = backgroundsPath == "" ? BACKGROUNDS_PATH : backgroundsPath;
+		this.spritesPath = spritesPath == "" ? SPRITES_PATH : spritesPath;
+		this.fontsPath = fontsPath == "" ? FONTS_PATH : fontsPath;
+		this.languagesPath = languagesPath == "" ? LANGUAGES_PATH : languagesPath;
+		this.soundsPath = soundsPath == "" ? SOUNDS_PATH : soundsPath;
+		this.musicPath = musicPath == "" ? MUSIC_PATH : musicPath;
+		this.analyticsDB = analyticsDB;
 		this.googleAnalyticsID = googleAnalyticsID;
 		
 		addEventListener(Event.ADDED_TO_STAGE, added);
@@ -246,10 +286,11 @@ class Game extends Sprite
 	
 	public function HandleGameExit(e : Event) : Void
 	{
-		//TODO: exit properly
 		#if mobile
 		if (googleAnalyticsID != "")
 			GAnalytics.stopSession();
 		#end
+		
+		Sys.exit(0);
 	}
 }

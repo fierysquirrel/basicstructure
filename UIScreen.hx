@@ -58,8 +58,16 @@ class UIScreen extends GameScreen
 		EventManager.AddListener(TaskEvent.TYPE, OnTaskListener);
 		
 		//Google Analytics
-		#if mobile		
-		GAnalytics.trackScreen(name);
+		#if mobile
+		try
+		{
+			//TODO: We have to check somehow if the Analytics is connected or not
+			GAnalytics.trackScreen(name);
+		}
+		catch(e : String)
+		{
+			trace(e);
+		}
 		#end
 	}
 	
@@ -86,13 +94,16 @@ class UIScreen extends GameScreen
 		
 		try
 		{
-			if (Assets.exists(view))
+			if (view != "")
 			{
-				str = Assets.getText(view);
-				xml = Xml.parse(str).firstElement();
-				
-				for (e in xml.elements())
-					globals.set(e.get("name"), e.get("value"));
+				if (Assets.exists(view))
+				{
+					str = Assets.getText(view);
+					xml = Xml.parse(str).firstElement();
+					
+					for (e in xml.elements())
+						globals.set(e.get("name"), e.get("value"));
+				}
 			}
 		}
 		catch (e : String)
@@ -110,12 +121,15 @@ class UIScreen extends GameScreen
 		{
 			if (view != "")
 			{
-				str = Assets.getText(view);
-				xml = Xml.parse(str).firstElement();
-				
-				ParseViewHeader(xml);
-				for (e in xml.elements())
-					ParseViewBody(e);
+				if (Assets.exists(view))
+				{
+					str = Assets.getText(view);
+					xml = Xml.parse(str).firstElement();
+					
+					ParseViewHeader(xml);
+					for (e in xml.elements())
+						ParseViewBody(e);
+				}
 			}
 		}
 		catch (e : String)
@@ -593,7 +607,13 @@ class UIScreen extends GameScreen
 			removeChild(texts.get(k));
 			texts.remove(k);
 		}
-
+		
+		//Clean background layer
+		while (backgroundLayer.numChildren > 0)
+			backgroundLayer.removeChildAt(0);
+			
+		removeChild(backgroundLayer);
+		
 		if(background != null)
 			background = null;
 			
