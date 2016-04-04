@@ -29,6 +29,6 @@ class AlertScreen extends ModalScreen
 	{
 		super.Close();
 		
-		eventDispatcher.dispatchEvent(new GameEvent(GameEvents.EVENT_SCREEN_EXITED,NAME));
+		ScreenManager.ExitScreen(this);
 	}
 }

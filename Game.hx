@@ -11,6 +11,7 @@ import flash.ui.MultitouchInputMode;
 import screenevents.GameEvents;
 import openfl.net.SharedObject;
 import openfl.net.SharedObjectFlushStatus;
+import openfl.system.Capabilities;
 
 /**
  * 
@@ -25,12 +26,13 @@ import openfl.net.SharedObjectFlushStatus;
 class Game extends Sprite 
 {
 	/*Default paths*/
-	static public var FONTS_PATH : String 		= "assets/fonts/";
-	static public var MUSIC_PATH : String 		= "assets/soundtracks/";
-	static public var BACKGROUNDS_PATH : String	= "assets/backgrounds/";
-	static public var SOUNDS_PATH : String 		= "assets/sounds/";
-	static public var SPRITES_PATH : String 		= "assets/sprites/";
-	static public var LANGUAGES_PATH : String 	= "assets/languages/";
+	static public var FONTS_PATH : String 			= "assets/fonts/";
+	static public var MUSIC_PATH : String 			= "assets/soundtracks/";
+	static public var BACKGROUNDS_PATH : String		= "assets/backgrounds/";
+	static public var SOUNDS_PATH : String 			= "assets/sounds/";
+	static public var SPRITES_PATH : String 			= "assets/sprites/";
+	static public var LANGUAGES_PATH : String 		= "assets/languages/";
+	static public var USER_STORAGE_NAME : String 	= "user";
 	
 	static public var USER_ID : String;
 	
@@ -81,9 +83,10 @@ class Game extends Sprite
 	/* ENTRY POINT */
 	function resize(e : Event) 
 	{
-		if (!inited) 
+		if (inited)
+			Resize();
+		else
 			init();
-		//else //(resize or orientation change)
 	}
 	
 	/*
@@ -108,13 +111,13 @@ class Game extends Sprite
 		addChild(debugContainer);
 		
 		//User data
-		userSharedObj = SharedObject.getLocal("user");
+		userSharedObj = SharedObject.getLocal(USER_STORAGE_NAME);
 		
 		if (userSharedObj.data.id == null)
 		{
 			USER_ID = MathHelper.CreateID(50);
 			userSharedObj.data.id = USER_ID;
-			SaveData(userSharedObj);
+			StorageHelper.SaveData(userSharedObj);
 		}
 		else
 			USER_ID = userSharedObj.data.id;
@@ -187,30 +190,12 @@ class Game extends Sprite
 		ScreenManager.AddEvent(GameEvents.EVENT_EXIT_GAME, HandleGameExit);
 	}
 	
-	//ESTA FUNCTION NO VA AQUI, HAY QUE REESTRUCTURAR
-	public static function SaveData(sharedObj : SharedObject) : Dynamic
+	private function Resize() : Void
 	{
-		// Prepare to save.. with some checks
-		#if ( cpp || neko )
-			// Android didn't wanted SharedObjectFlushStatus not to be a String
-			var flushStatus : SharedObjectFlushStatus = null;
-		#else
-			// Flash wanted it very much to be a String
-			var flushStatus : String = null;
-		#end
-
-		try 
-		{
-			flushStatus = sharedObj.flush() ;// Save the object
-		} 
-		catch ( e:Dynamic ) 
-		{
-			trace('couldn\'t write...');
-		}
-		
-		return flushStatus;
+		//TODO: we are trying to fix the android problemwith the resolution
+		//GraphicManager.Resize();
 	}
-
+	
 	/* SETUP */
 	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "", analyticsDB : String = "", googleAnalyticsID : String = "") 
 	{

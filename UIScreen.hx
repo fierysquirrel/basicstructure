@@ -191,7 +191,7 @@ class UIScreen extends GameScreen
 	private function ParseUIObjects(xml : Xml) : Void
 	{
 		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
-		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY : Float;
+		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
 		var checked, hasTitle, hasPager, flipX, isFeedback : Bool;
 		var options : Array<Option>;
@@ -202,6 +202,7 @@ class UIScreen extends GameScreen
 		var pos : Point;
 		var font : Font;
 		var sliderTitle : SliderTitle;
+		var buttonEffect : UIObject.Effect;
 		
 		backActiveName = "";
 		backPressName = "";
@@ -227,6 +228,22 @@ class UIScreen extends GameScreen
 				uiObjY = pos.y;
 				activeColor = globals.exists("buttonActiveColor") ? Std.parseInt(globals.get("buttonActiveColor")) : 0xffffff;
 				pressColor = globals.exists("buttonPressColor") ? Std.parseInt(globals.get("buttonPressColor")) : 0xffffff;
+				
+				if (e2.get("effect") == null)
+					buttonEffect = UIObject.Effect.None;
+				else
+				{
+					switch(e2.get("effect"))
+					{
+						case "push":
+							buttonEffect = UIObject.Effect.Push;
+						case "zoom":
+							buttonEffect = UIObject.Effect.Zoom;
+						default:
+							buttonEffect = UIObject.Effect.None;
+					}
+				}
+						
 				switch(e2.nodeName.toLowerCase())
 				{
 					case TextButton.XML:
@@ -287,6 +304,7 @@ class UIScreen extends GameScreen
 						}
 						
 						rotation = e2.get("rotation") != null ? Std.parseFloat(e2.get("rotation")) : 0;
+						scale = e2.get("scale") != null ? Std.parseFloat(e2.get("scale")) : 1;
 						image = e2.get("image");
 						flipX = e2.get("flipX") == null ? false : e2.get("flipX") == "true";
 						imageOffsetX = e2.get("offsetX") == null ? 0 : GraphicManager.FixFloatScale2Screen(Std.parseFloat(e2.get("offsetX")));
@@ -294,7 +312,7 @@ class UIScreen extends GameScreen
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName,new Point(imageOffsetX,imageOffsetY));
+						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName,new Point(imageOffsetX,imageOffsetY),scale,buttonEffect);
 					case TextCheckBox.XML:
 						checkedText = LanguageManager.Translate(e2.get("checkedText"));
 						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
@@ -350,7 +368,7 @@ class UIScreen extends GameScreen
 						onUncheckHandlerName = e2.get("onUncheck");
 						
 						//Button
-						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText);
+						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText,buttonEffect);
 					case TextSelect.XML:
 						options = new Array<Option>();
 						checkedText = LanguageManager.Translate(e2.get("checkedText"));
@@ -471,6 +489,7 @@ class UIScreen extends GameScreen
 		var textField : Text;
 		var pos : Point;
 		var texts : Map<String,Text>;
+		var visible : Bool;
 		
 		texts = new Map<String,Text>();
 		for (e in xml.elements())
@@ -489,10 +508,12 @@ class UIScreen extends GameScreen
 				
 				xAlign = e.get("x-align") == null ? "center" : e.get("x-align");
 				yAlign = e.get("y-align") == null ? "middle" : e.get("y-align");
+				visible = e.get("visible") == null ? true : e.get("visible") == "true";
 				
 				letterSpacing = GraphicManager.FixIntScale2Screen(Std.parseInt(e.get("letterspacing")));
 				
-				textField = TextManager.CreateText(font, text, pos, size, color, letterSpacing, xAlign, yAlign,false, order);
+				textField = TextManager.CreateText(font, text, pos, size, color, letterSpacing, xAlign, yAlign, false, order);
+				textField.visible = visible;
 				
 				texts.set(name, textField);
 				
@@ -511,6 +532,7 @@ class UIScreen extends GameScreen
 		var tilelayer : Layer;
 		var elements : Map<String,TileSprite>;
 		var order, flipHor, flipVer : Int;
+		var visible : Bool;
 		
 		spritesheet = xml.get("spritesheet");
 		layer = xml.get("layer");
@@ -543,13 +565,14 @@ class UIScreen extends GameScreen
 						sca = e2.get("scale") == null ? 1 : Std.parseFloat(e2.get("scale"));
 						sprite.x = spriteX;
 						sprite.y = spriteY;
+						visible = e2.get("visible") == null ? true : e2.get("visible") == "true";
 						
 						sprite.rotation = rot;
 						flipHor = e2.get("flip-hor") == null ? 1 : -1;
 						flipVer = e2.get("flip-ver") == null ? 1 : -1;
 						sprite.scaleX = GraphicManager.GetFixScale() * flipHor * sca;
 						sprite.scaleY = GraphicManager.GetFixScale() * flipVer * sca;
-						
+						sprite.visible = visible;
 						elements.set(id, sprite);
 						AddSprite(id,layer,sprite);
 					}
@@ -779,6 +802,7 @@ class UIScreen extends GameScreen
 	
 	public function Close() : Void
 	{
+		ScreenManager.ExitScreen(this);
 	}
 	
 	override public function AddElementsToRender() : Void
@@ -808,5 +832,10 @@ class UIScreen extends GameScreen
 			return 1;
 		else
 			return -1;
+	}
+	
+	public function IsClosed() : Bool
+	{
+		return isClosed;
 	}
 }
