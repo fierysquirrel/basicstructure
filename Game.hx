@@ -12,6 +12,7 @@ import screenevents.GameEvents;
 import openfl.net.SharedObject;
 import openfl.net.SharedObjectFlushStatus;
 import openfl.system.Capabilities;
+import openfl.ui.Keyboard;
 
 /**
  * 
@@ -276,6 +277,8 @@ class Game extends Sprite
 			GAnalytics.stopSession();
 		#end
 		
+		#if cpp
 		Sys.exit(0);
+		#end
 	}
 }

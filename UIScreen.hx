@@ -10,6 +10,7 @@ import flash.text.Font;
 import openfl.Assets;
 
 
+
 /**
  * ...
  * @author Henry D. Fernández B.
@@ -66,6 +67,7 @@ class UIScreen extends GameScreen
 		}
 		catch(e : String)
 		{
+			Debugger.Print(e);
 			trace(e);
 		}
 		#end
