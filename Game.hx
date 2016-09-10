@@ -55,6 +55,8 @@ class Game extends Sprite
 	
 	private var analyticsManager : AnalyticsManager;
 	
+	private var fieryPlay : FieryPlay;
+	
 	private var debugger : Debugger;
 	
 	private var screenWidth : Int;
@@ -134,6 +136,11 @@ class Game extends Sprite
 		
 		//Text Manager
 		textManager = TextManager.InitInstance(fontsPath);
+		
+		//Fiery Play
+		fieryPlay = FieryPlay.InitInstance();
+		//Init Fiery Play
+		FieryPlay.Init();
 		
 		//Language Manager
 		languageManager = LanguageManager.InitInstance(languagesPath);

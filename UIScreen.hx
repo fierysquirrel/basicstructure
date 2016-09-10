@@ -37,6 +37,7 @@ class UIScreen extends GameScreen
 	private var isClosed : Bool;
 	private var texts : Map<String,Text>;
 	private var timerManager : TimerManager;
+	private var tweenManager : TweenManager;
 	
 	public function new(name : String,x : Float,y : Float,viewPath : String,viewName : String, isPopup : Bool = false) 
 	{
@@ -54,6 +55,7 @@ class UIScreen extends GameScreen
 		closingAlpha = 1;
 		isClosed = false;
 		timerManager = new TimerManager();
+		tweenManager = new TweenManager();
 		
 		EventManager.AddListener(TimerEvent.TYPE, OnTimerListener);
 		EventManager.AddListener(TaskEvent.TYPE, OnTaskListener);
@@ -193,7 +195,7 @@ class UIScreen extends GameScreen
 	private function ParseUIObjects(xml : Xml) : Void
 	{
 		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
-		var uiObjX, uiObjY, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
+		var uiObjX, uiObjY,uiObjW, uiObjH, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
 		var checked, hasTitle, hasPager, flipX, isFeedback : Bool;
 		var options : Array<Option>;
@@ -204,7 +206,7 @@ class UIScreen extends GameScreen
 		var pos : Point;
 		var font : Font;
 		var sliderTitle : SliderTitle;
-		var buttonEffect : UIObject.Effect;
+		var actionEffect, highlightEffect : UIObject.Effect;
 		
 		backActiveName = "";
 		backPressName = "";
@@ -231,18 +233,33 @@ class UIScreen extends GameScreen
 				activeColor = globals.exists("buttonActiveColor") ? Std.parseInt(globals.get("buttonActiveColor")) : 0xffffff;
 				pressColor = globals.exists("buttonPressColor") ? Std.parseInt(globals.get("buttonPressColor")) : 0xffffff;
 				
-				if (e2.get("effect") == null)
-					buttonEffect = UIObject.Effect.None;
+				if (e2.get("actionEffect") == null)
+					actionEffect = UIObject.Effect.None;
 				else
 				{
-					switch(e2.get("effect"))
+					switch(e2.get("actionEffect"))
 					{
 						case "push":
-							buttonEffect = UIObject.Effect.Push;
+							actionEffect = UIObject.Effect.Push;
 						case "zoom":
-							buttonEffect = UIObject.Effect.Zoom;
+							actionEffect = UIObject.Effect.Zoom;
 						default:
-							buttonEffect = UIObject.Effect.None;
+							actionEffect = UIObject.Effect.None;
+					}
+				}
+				
+				if (e2.get("highlightEffect") == null)
+					highlightEffect = UIObject.Effect.None;
+				else
+				{
+					switch(e2.get("highlightEffect"))
+					{
+						case "push":
+							highlightEffect = UIObject.Effect.Push;
+						case "zoom":
+							highlightEffect = UIObject.Effect.Zoom;
+						default:
+							highlightEffect = UIObject.Effect.None;
 					}
 				}
 						
@@ -314,7 +331,13 @@ class UIScreen extends GameScreen
 						
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
-						uiObj = new ImageButton(id,tileLayer,uiObjX,uiObjY,onActionHandlerName,activeColor,pressColor,backActiveName,backPressName,image,flipX,onSoundHandlerName,new Point(imageOffsetX,imageOffsetY),scale,buttonEffect);
+						uiObj = new ImageButton(id, tileLayer, uiObjX, uiObjY, onActionHandlerName, activeColor, pressColor, backActiveName, backPressName, image, flipX, onSoundHandlerName, new Point(imageOffsetX, imageOffsetY), scale,actionEffect,highlightEffect);
+					case TextArea.XML:
+						
+						uiObjW = Std.parseFloat(e2.get("width"));
+						uiObjH = Std.parseFloat(e2.get("height"));
+						
+						uiObj = new TextArea(id, tileLayer, uiObjX, uiObjY, uiObjW, uiObjH);
 					case TextCheckBox.XML:
 						checkedText = LanguageManager.Translate(e2.get("checkedText"));
 						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
@@ -370,7 +393,7 @@ class UIScreen extends GameScreen
 						onUncheckHandlerName = e2.get("onUncheck");
 						
 						//Button
-						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText,buttonEffect);
+						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText,actionEffect,highlightEffect);
 					case TextSelect.XML:
 						options = new Array<Option>();
 						checkedText = LanguageManager.Translate(e2.get("checkedText"));
@@ -736,6 +759,22 @@ class UIScreen extends GameScreen
 		}
 	}
 	
+	override public function HandleKeyDownEvent(key:UInt):Void 
+	{
+		super.HandleKeyDownEvent(key);
+		
+		for (o in uiObjects)
+			o.HandleKeyDownEvent(key);
+	}
+	
+	override public function HandleKeyUpEvent(key:UInt):Void 
+	{
+		super.HandleKeyUpEvent(key);
+		
+		for (o in uiObjects)
+			o.HandleKeyUpEvent(key);
+	}
+	
 	override public function Update(gameTime:Float):Void 
 	{
 		super.Update(gameTime);
@@ -794,6 +833,9 @@ class UIScreen extends GameScreen
 				
 			//Timer Manager System
 			timerManager.Update(gameTime);
+			
+			//Tween Manager System
+			tweenManager.Update(gameTime);
 		}
 	}
 	

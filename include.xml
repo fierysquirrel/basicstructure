@@ -15,7 +15,9 @@
 	<haxelib name="languagemanager" />
 	<haxelib name="textmanager" />
 	<haxelib name="timermanager" />
+	<haxelib name="tweenmanager" />
 	<haxelib name="analyticsmanager" />
 	<haxelib name="debugger" />
 	<haxelib name="eventmanager" />
+	<haxelib name="fieryplay" />
 </project>
