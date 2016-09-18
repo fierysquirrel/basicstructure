@@ -71,6 +71,8 @@ class Game extends Sprite
 	
 	private var languagesPath : String;
 	
+	private var defaultLanguage : String;
+	
 	private var soundsPath : String;
 	
 	private var musicPath : String;
@@ -143,7 +145,7 @@ class Game extends Sprite
 		FieryPlay.Init();
 		
 		//Language Manager
-		languageManager = LanguageManager.InitInstance(languagesPath);
+		languageManager = LanguageManager.InitInstance(languagesPath,defaultLanguage);
 		
 		//Sound Manager
 		soundManager = SoundManager.InitInstance(soundsPath,musicPath);
@@ -205,7 +207,7 @@ class Game extends Sprite
 	}
 	
 	/* SETUP */
-	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "", analyticsDB : String = "", googleAnalyticsID : String = "") 
+	public function new(screenWidth : Int = 0, screenHeight : Int = 0, backgroundsPath : String = "",spritesPath : String = "",soundsPath : String = "",musicPath : String = "", fontsPath : String = "", languagesPath : String = "",defaultLanguage : String = "", analyticsDB : String = "", googleAnalyticsID : String = "") 
 	{
 		super();
 		
@@ -215,6 +217,7 @@ class Game extends Sprite
 		this.spritesPath = spritesPath == "" ? SPRITES_PATH : spritesPath;
 		this.fontsPath = fontsPath == "" ? FONTS_PATH : fontsPath;
 		this.languagesPath = languagesPath == "" ? LANGUAGES_PATH : languagesPath;
+		this.defaultLanguage = defaultLanguage;
 		this.soundsPath = soundsPath == "" ? SOUNDS_PATH : soundsPath;
 		this.musicPath = musicPath == "" ? MUSIC_PATH : musicPath;
 		this.analyticsDB = analyticsDB;
