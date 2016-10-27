@@ -197,7 +197,7 @@ class UIScreen extends GameScreen
 		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
 		var uiObjX, uiObjY,uiObjW, uiObjH, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
-		var checked, hasTitle, hasPager, flipX, isFeedback : Bool;
+		var checked, hasTitle, hasPager, flipX, isFeedback, useOriginalFont : Bool;
 		var options : Array<Option>;
 		var sliderPages : Array<SliderPage>;
 		var uiObj : UIObject;
@@ -232,6 +232,7 @@ class UIScreen extends GameScreen
 				uiObjY = pos.y;
 				activeColor = globals.exists("buttonActiveColor") ? Std.parseInt(globals.get("buttonActiveColor")) : 0xffffff;
 				pressColor = globals.exists("buttonPressColor") ? Std.parseInt(globals.get("buttonPressColor")) : 0xffffff;
+				useOriginalFont = e2.get("originalFont") == null ? false : e2.get("originalFont") == "true";
 				
 				if (e2.get("actionEffect") == null)
 					actionEffect = UIObject.Effect.None;
@@ -287,7 +288,25 @@ class UIScreen extends GameScreen
 						//Add on press handler name
 						onActionHandlerName = e2.get("onPress");
 						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("size")));
-						font = TextManager.GetFont(e2.get("font"));
+						if (useOriginalFont)
+						{
+							font = TextManager.GetFont(e2.get("font"));
+							fontId = e2.get("font");
+						}
+						else
+						{
+							//We give priority to the FONT + LANGUAGE
+							if (TextManager.FontExists(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage()))
+							{
+								font = TextManager.GetFont(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage());
+								fontId = e2.get("font") + "-" + LanguageManager.GetCurrentLanguage();
+							}
+							else
+							{
+								font = TextManager.GetFont(e2.get("font"));
+								fontId = e2.get("font");
+							}
+						}
 						//Active Color
 						if(e2.get("activeColor") != null)
 							activeColor = Std.parseInt(e2.get("activeColor"));
@@ -295,7 +314,7 @@ class UIScreen extends GameScreen
 						if(e2.get("pressColor") != null)
 							pressColor = Std.parseInt(e2.get("pressColor"));
 						
-						fontId = e2.get("font");
+						
 						//Button
 						uiObj = new TextButton(id, tileLayer,uiObjX,uiObjY,onActionHandlerName,text,fontId,textSize,activeColor,pressColor,backActiveName,backPressName,0,onSoundHandlerName);
 					case ImageButton.XML:
@@ -361,7 +380,16 @@ class UIScreen extends GameScreen
 						onCheckHandlerName = e2.get("onCheck");
 						onUncheckHandlerName = e2.get("onUncheck");
 						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("text")));
-						font = TextManager.GetFont(e2.get("font"));
+						if (useOriginalFont)
+							font = TextManager.GetFont(e2.get("font"));
+						else
+						{
+							//We give priority to the FONT + LANGUAGE
+							if(TextManager.FontExists(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage()))
+								font = TextManager.GetFont(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage());
+							else
+								font = TextManager.GetFont(e2.get("font"));
+						}
 						activeColor = Std.parseInt(e2.get("activeColor"));
 						pressColor = Std.parseInt(e2.get("pressColor"));
 						//Button
@@ -420,10 +448,28 @@ class UIScreen extends GameScreen
 						//Add on press handler name
 						onActionHandlerName = e2.get("onChange");
 						textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("size")));
-						font = TextManager.GetFont(e2.get("font"));
+						if (useOriginalFont)
+						{
+							font = TextManager.GetFont(e2.get("font"));
+							fontId = e2.get("font");
+						}
+						else
+						{
+							//We give priority to the FONT + LANGUAGE
+							if (TextManager.FontExists(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage()))
+							{
+								font = TextManager.GetFont(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage());
+								fontId = e2.get("font") + "-" + LanguageManager.GetCurrentLanguage();
+							}
+							else
+							{
+								font = TextManager.GetFont(e2.get("font"));
+								fontId = e2.get("font");
+							}
+						}
 						activeColor = Std.parseInt(e2.get("activeColor"));
 						pressColor = Std.parseInt(e2.get("pressColor"));
-						fontId = e2.get("font");
+						
 						//Button
 						uiObj = new TextSelect(id, tileLayer, uiObjX, uiObjY,fontId ,onActionHandlerName,options, 0, font, textSize,activeColor,pressColor, backActiveName, backPressName);
 					case Slider.XML:
@@ -441,12 +487,35 @@ class UIScreen extends GameScreen
 						maxSpeed = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("maxSpeed")));
 						threshold = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("threshold")));
 						
+						if (useOriginalFont)
+							font = TextManager.GetFont(e2.get("font"));
+						else
+						{
+							//We give priority to the FONT + LANGUAGE
+							if(TextManager.FontExists(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage()))
+								font = TextManager.GetFont(e2.get("font") + "-" + LanguageManager.GetCurrentLanguage());
+							else
+								font = TextManager.GetFont(e2.get("font"));
+						}
+							
 						sliderTitle = null;
 						if (hasTitle)
 						{
 							titleX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("titleX")));
 							titleY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("titleY")));
-							fontId = e2.get("titleFont");
+							
+							if (useOriginalFont)
+								fontId = e2.get("titleFont");
+							else
+							{
+								//We give priority to the FONT + LANGUAGE
+								if(TextManager.FontExists(e2.get("titleFont") + "-" + LanguageManager.GetCurrentLanguage()))
+									fontId = e2.get("titleFont") + "-" + LanguageManager.GetCurrentLanguage();
+								else
+									fontId = e2.get("titleFont");
+							}
+							
+							
 							textSize = GraphicManager.FixIntScale2Screen(Std.parseInt(e2.get("titleSize")));
 							titleColor = Std.parseInt(e2.get("titleColor"));
 							titleBackColor = Std.parseInt(e2.get("titleBackColor"));
@@ -514,16 +583,25 @@ class UIScreen extends GameScreen
 		var textField : Text;
 		var pos : Point;
 		var texts : Map<String,Text>;
-		var visible : Bool;
+		var visible, useOriginalFont : Bool;
 		
 		texts = new Map<String,Text>();
 		for (e in xml.elements())
 		{
 			if (e.nodeType == Xml.Element)
 			{
-				
+				useOriginalFont = e.get("originalFont") == null ? false : e.get("originalFont") == "true";
 				name = e.get("name");
-				font = e.get("font");
+				if (useOriginalFont)
+					font = e.get("font");
+				else
+				{
+					//We give priority to the FONT + LANGUAGE
+					if(TextManager.FontExists(e.get("font") + "-" + LanguageManager.GetCurrentLanguage()))
+						font = e.get("font") + "-" + LanguageManager.GetCurrentLanguage();
+					else
+						font = e.get("font");
+				}
 				translate = e.get("translate") == null ? true : e.get("translate") == "true";
 				text = translate ? LanguageManager.Translate(e.get("value")) : e.get("value");
 				pos = GraphicManager.FixPoint2Screen(new Point(Std.parseFloat(e.get("x")), Std.parseFloat(e.get("y"))));

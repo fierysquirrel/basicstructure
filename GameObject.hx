@@ -25,7 +25,7 @@ class GameObject
 	private var sprite : TileGroup;
 	private var spriteTrasform : TileGroupTransform;
 	private var camera : Camera;
-	
+	private var isDestroying : Bool;
 	
 	public function new(type : String,id : String,x : Float, y : Float) 
 	{
@@ -37,6 +37,7 @@ class GameObject
 		initialY = y;
 		velocity = new Point();
 		acceleration = new Point();
+		isDestroying = false;
 	}
 	
 	public function LoadContent(layer : TileLayer) : Void
@@ -63,6 +64,13 @@ class GameObject
 	private function AddSprite(sprite : TileSprite) : Void
 	{
 		this.sprite.addChild(sprite);
+		spriteTrasform.addProxy(sprite);
+		spriteTrasform.update();
+	}
+	
+	private function AddSpriteAt(sprite : TileSprite, index : Int) : Void
+	{
+		this.sprite.addChildAt(sprite,index);
 		spriteTrasform.addProxy(sprite);
 		spriteTrasform.update();
 	}
@@ -136,5 +144,15 @@ class GameObject
 	{
 		if(sprite != null)
 			layer.removeChild(sprite);
+	}
+	
+	public function Destroy() : Void
+	{
+		isDestroying = true;
+	}
+	
+	public function IsDestroying() : Bool
+	{
+		return isDestroying;
 	}
 }
