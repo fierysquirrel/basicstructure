@@ -197,7 +197,7 @@ class UIScreen extends GameScreen
 		var state, text, id, spritesheet, spriteName, layer, data, onActionHandlerName, backActiveName, backPressName, id, onCheckHandlerName, onUncheckHandlerName, checkedText, uncheckedText, image, fontId,onSoundHandlerName : String;
 		var uiObjX, uiObjY,uiObjW, uiObjH, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
-		var checked, hasTitle, hasPager, flipX, isFeedback, useOriginalFont : Bool;
+		var checked, hasTitle, hasPager, flipX, isFeedback, useOriginalFont, translate : Bool;
 		var options : Array<Option>;
 		var sliderPages : Array<SliderPage>;
 		var uiObj : UIObject;
@@ -233,6 +233,7 @@ class UIScreen extends GameScreen
 				activeColor = globals.exists("buttonActiveColor") ? Std.parseInt(globals.get("buttonActiveColor")) : 0xffffff;
 				pressColor = globals.exists("buttonPressColor") ? Std.parseInt(globals.get("buttonPressColor")) : 0xffffff;
 				useOriginalFont = e2.get("originalFont") == null ? false : e2.get("originalFont") == "true";
+				translate = e2.get("translate") == null ? true : e2.get("translate") == "true";
 				
 				if (e2.get("actionEffect") == null)
 					actionEffect = UIObject.Effect.None;
@@ -268,7 +269,7 @@ class UIScreen extends GameScreen
 				{
 					case TextButton.XML:
 						
-						text = LanguageManager.Translate(e2.get("text"));
+						text = translate ? LanguageManager.Translate(e2.get("text")) : e2.get("text");
 						for (e3 in e2.elements())
 						{
 							if (e3.nodeName.toLowerCase() == "sprite")
@@ -424,8 +425,8 @@ class UIScreen extends GameScreen
 						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText,actionEffect,highlightEffect);
 					case TextSelect.XML:
 						options = new Array<Option>();
-						checkedText = LanguageManager.Translate(e2.get("checkedText"));
-						uncheckedText = LanguageManager.Translate(e2.get("uncheckedText"));
+						checkedText = translate ? LanguageManager.Translate(e2.get("checkedText")) : e2.get("checkedText");
+						uncheckedText = translate ? LanguageManager.Translate(e2.get("uncheckedText")) : e2.get("uncheckedText");
 						for (e3 in e2.elements())
 						{
 							switch(e3.nodeName.toLowerCase())
