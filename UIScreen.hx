@@ -198,7 +198,7 @@ class UIScreen extends GameScreen
 		var uiObjX, uiObjY,uiObjW, uiObjH, spriteX, spriteY, rotation, recX, recY, titleX, titleY, pagerX, pagerY, pagerSep,minSpeed,maxSpeed,threshold,imageOffsetX,imageOffsetY, scale : Float;
 		var textSize, activeColor,pressColor, order, titleColor, titleBackColor,titleBackSep : Int;
 		var checked, hasTitle, hasPager, flipX, isFeedback, useOriginalFont, translate : Bool;
-		var options : Array<Option>;
+		var options : Array<TextOption>;
 		var sliderPages : Array<SliderPage>;
 		var uiObj : UIObject;
 		var page : SliderPage;
@@ -424,7 +424,7 @@ class UIScreen extends GameScreen
 						//Button
 						uiObj = new ImageCheckBox(id, tileLayer, uiObjX, uiObjY, onCheckHandlerName, onUncheckHandlerName, checked,activeColor,pressColor, backActiveName, backPressName, checkedText, uncheckedText,actionEffect,highlightEffect);
 					case TextSelect.XML:
-						options = new Array<Option>();
+						options = new Array<TextOption>();
 						checkedText = translate ? LanguageManager.Translate(e2.get("checkedText")) : e2.get("checkedText");
 						uncheckedText = translate ? LanguageManager.Translate(e2.get("uncheckedText")) : e2.get("uncheckedText");
 						for (e3 in e2.elements())
@@ -443,7 +443,7 @@ class UIScreen extends GameScreen
 									}
 								case "options":
 									for (e4 in e3.elements())
-										options.push(new Option(e4.get("name"),e4.get("value")));
+										options.push(new TextOption(e4.get("name"),e4.get("value"),e4.get("font")));
 							}
 						}
 						//Add on press handler name
@@ -564,6 +564,7 @@ class UIScreen extends GameScreen
 	
 	private function OnTaskListener(event : TaskEvent) : Void
 	{
+		//trace("task: " + event.type);
 		timerManager.StartTask(event.goal, event.ini, event.step, event.onComplete, event.onRunning);
 	}
 	
