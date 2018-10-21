@@ -1,7 +1,8 @@
 package;
 
-import aze.display.SparrowTilesheet;
-import aze.display.TileLayer;
+import openfl.display.SparrowTileset;
+import openfl.display.Tile;
+import openfl.display.Tilemap;
 import flash.display.BitmapData;
 import flash.geom.Point;
 import flash.text.Font;
@@ -23,9 +24,9 @@ class UIManager
 	
 	private var uiObjects : Array<UIObject>;
 	
-	private var layers : Map<String,TileLayer>;
+	private var layers : Map<String,Tilemap>;
 	
-	public function new(layers : Map<String,TileLayer>) 
+	public function new(layers : Map<String,Tilemap>) 
 	{
 		this.layers = layers;
 		uiObjects = new Array<UIObject>();
@@ -78,7 +79,7 @@ class UIManager
 		var uiObj : UIObject;
 		var sliderEle : SliderPageButton;
 		var page : SliderPage;
-		var tileLayer : TileLayer;
+		var tileLayer : Tilemap;
 		var pos : Point;
 		var font : Font;
 		

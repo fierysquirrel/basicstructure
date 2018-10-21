@@ -1,9 +1,8 @@
 package;
 
-import aze.display.TileGroup;
-import aze.display.TileLayer;
-import aze.display.TileSprite;
-import aze.display.behaviours.TileGroupTransform;
+import openfl.display.Tile;
+import openfl.display.TileGroup;
+import openfl.display.Tilemap;
 
 /**
  * ...
@@ -13,32 +12,32 @@ class Logo extends TileGroup
 {
 	public static var NAME : String = "Logo";
 	
-	private var transform : TileGroupTransform;
+	//private var transform : TileGroupTransform;
 	
-	public function new(layer:TileLayer) 
+	public function new(layer:Tilemap) 
 	{
 		super(layer);
 		
-		transform = new TileGroupTransform(this);
+		//transform = new TileGroupTransform(this);
 	}
 	
-	private function AddSprite(name : String, r : Float = 1, g : Float = 1, b: Float = 1) : TileSprite
+	private function AddSprite(name : String, r : Float = 1, g : Float = 1, b: Float = 1) : Tile
 	{
-		var sprite : TileSprite;
+		var sprite : Tile;
 		
-		sprite = new TileSprite(layer, name);
+		sprite = new Tile(layer, name);
 		sprite.r = r;
 		sprite.g = g;
 		sprite.b = b;
 		sprite.scale = GraphicManager.GetFixScale();
 		addChild(sprite);
-		transform.addProxy(sprite);
+		//transform.addProxy(sprite);
 		
 		return sprite;
 	}
 	
 	public function Update(gameTime : Float) : Void
 	{
-		transform.update();
+		//transform.update();
 	}
 }

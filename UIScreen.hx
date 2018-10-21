@@ -1,7 +1,7 @@
 package;
 
-import aze.display.TileLayer;
-import aze.display.TileSprite;
+import openfl.display.Tile;
+import openfl.display.Tilemap;
 import flash.display.Bitmap;
 import flash.display.Sprite;
 import flash.geom.Point;
@@ -629,13 +629,13 @@ class UIScreen extends GameScreen
 		return texts;
 	}
 	
-	private function ParseSprites(xml : Xml) : Map<String,TileSprite>
+	private function ParseSprites(xml : Xml) : Map<String,Tile>
 	{
 		var spritesheet, spriteName, layer, data, id : String;
 		var spriteX, spriteY, rot, sca : Float;
-		var sprite : TileSprite;
+		var sprite : Tile;
 		var tilelayer : Layer;
-		var elements : Map<String,TileSprite>;
+		var elements : Map<String,Tile>;
 		var order, flipHor, flipVer : Int;
 		var visible : Bool;
 		
@@ -647,7 +647,7 @@ class UIScreen extends GameScreen
 		tilelayer.useTint = true;
 		AddLayer(layer,tilelayer);
 		
-		elements = new Map<String,TileSprite>();
+		elements = new Map<String,Tile>();
 		
 		if (GetLayer(layer) != null)
 		{
@@ -662,7 +662,7 @@ class UIScreen extends GameScreen
 						//layerIndex = spritesheetText;
 						spriteX = GraphicManager.FixFloat2ScreenX(Std.parseFloat(e2.get("x")));
 						spriteY = GraphicManager.FixFloat2ScreenY(Std.parseFloat(e2.get("y")));
-						sprite = new TileSprite(GetLayer(layer), spriteName);
+						sprite = new Tile(GetLayer(layer), spriteName);
 						sprite.r = e2.get("r") == null ? 1 : Std.parseFloat(e2.get("r"))/255;
 						sprite.g = e2.get("g") == null ? 1 : Std.parseFloat(e2.get("g"))/255;
 						sprite.b = e2.get("b") == null ? 1 : Std.parseFloat(e2.get("b")) / 255;
@@ -711,7 +711,7 @@ class UIScreen extends GameScreen
 		}
 	}
 	
-	public function AddSprite(key : String,layer : String,sprite : TileSprite)
+	public function AddSprite(key : String,layer : String,sprite : Tile)
 	{
 		if (sprite != null)
 		{

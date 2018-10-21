@@ -1,9 +1,8 @@
 package;
 
-import aze.display.TileGroup;
-import aze.display.TileLayer;
-import aze.display.TileSprite;
-import aze.display.behaviours.TileGroupTransform;
+import openfl.display.Tile;
+import openfl.display.TileGroup;
+import openfl.display.Tilemap;
 
 /**
  * ...
@@ -20,7 +19,7 @@ class GraphicTimer extends Timer
 	/*
 	 * Duration in seconds.
 	 * */
-	public function new(layer : TileLayer, text : Text,duration : Float, type : Timer.TimerType, onComplete : Void -> Void) 
+	public function new(layer : Tilemap, text : Text,duration : Float, type : Timer.TimerType, onComplete : Void -> Void) 
 	{
 		super(MathHelper.ConvertSecToMillisec(duration), type, onComplete, OnRunning);
 		
@@ -46,7 +45,7 @@ class GraphicTimer extends Timer
 		sprite.y = value;
 	}
 	
-	private function AddChild(child : TileSprite) : Void
+	private function AddChild(child : Tile) : Void
 	{
 		sprite.addChild(child);
 		transform.addProxy(child);

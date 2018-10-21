@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <project>
 	<haxelib name="openfl" />
-	<haxelib name="actuate" />
-	<haxelib name="tilelayer" />
 	<!--Extensions-->
 	<section if="mobile">
 		<haxelib name="ganalytics" />

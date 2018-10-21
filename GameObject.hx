@@ -1,10 +1,9 @@
 package;
 
-import aze.display.TileGroup;
-import aze.display.TileLayer;
-import aze.display.TileSprite;
-import aze.display.behaviours.TileGroupTransform;
 import flash.geom.Point;
+import openfl.display.Tile;
+import openfl.display.TileGroup;
+import openfl.display.Tilemap;
 
 /**
  * ...
@@ -19,7 +18,7 @@ class GameObject
 	
 	private var type : String;
 	private var id : String;
-	private var layer : TileLayer;
+	private var layer : Tilemap;
 	private var initialX : Float;
 	private var initialY : Float;
 	private var sprite : TileGroup;
@@ -40,7 +39,7 @@ class GameObject
 		isDestroying = false;
 	}
 	
-	public function LoadContent(layer : TileLayer) : Void
+	public function LoadContent(layer : Tilemap) : Void
 	{
 		this.layer = layer;
 		sprite = new TileGroup(layer);
@@ -61,14 +60,14 @@ class GameObject
 		return id;
 	}
 	
-	private function AddSprite(sprite : TileSprite) : Void
+	private function AddSprite(sprite : Tile) : Void
 	{
 		this.sprite.addChild(sprite);
 		spriteTrasform.addProxy(sprite);
 		spriteTrasform.update();
 	}
 	
-	private function AddSpriteAt(sprite : TileSprite, index : Int) : Void
+	private function AddSpriteAt(sprite : Tile, index : Int) : Void
 	{
 		this.sprite.addChildAt(sprite,index);
 		spriteTrasform.addProxy(sprite);
