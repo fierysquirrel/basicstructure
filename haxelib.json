@@ -1,14 +1,26 @@
 {
-  "name": "screenmanager",
-  "url": "",
+  "name": "Basic Structure",
+  "url": "http://fierysquirrel.com/",
   "license": "MIT",
-  "tags": ["openfl","screenmanager"],
+  "tags": ["openfl","framework","basic"],
   "description": "This is the core of the screen system. All screens are managed by this class.",
-  "version": "0.1",
-  "releasenote": "First Release",
-  "contributors": ["henrykun"],
+  "version": "1.1",
+  "releasenote": "Upgraded library to new OpenFL and Haxe",
+  "contributors": ["fierysquirrel"],
   "dependencies": 
   {
-    "openfl":""
+    "openfl":"",
+	"ui":"",
+	"screenmanager":"",
+	"soundmanager":"",
+	"graphicmanager":"",
+	"languagemanager":"",
+	"textmanager":"",
+	"timermanager":"",
+	"tweenmanager":"",
+	"analyticsmanager":"",
+	"debugger":"",
+	"eventmanager":"",
+	"fieryplay":""
   }
 }
